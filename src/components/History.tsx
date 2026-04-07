@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { ContentGeneration, UserProfile } from '../types';
-import { Trash2, Calendar, ChevronRight, Search, Clock } from 'lucide-react';
+import { Trash2, Calendar, ChevronRight, Search, Clock, Video, TrendingUp, Globe, FileText, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface HistoryProps {
@@ -14,6 +14,7 @@ export const History: React.FC<HistoryProps> = ({ user }) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selected, setSelected] = useState<ContentGeneration | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(
@@ -30,6 +31,12 @@ export const History: React.FC<HistoryProps> = ({ user }) => {
 
     return () => unsubscribe();
   }, [user.uid]);
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -141,10 +148,18 @@ export const History: React.FC<HistoryProps> = ({ user }) => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
-                    <h4 className="text-zinc-100 font-bold flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-zinc-500" />
-                      أفكار المنشورات
-                    </h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-zinc-100 font-bold flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-zinc-500" />
+                        أفكار المنشورات
+                      </h4>
+                      <button 
+                        onClick={() => copyToClipboard(selected.results.postIdeas.join('\n'), 'posts')}
+                        className="p-1.5 hover:bg-zinc-800 rounded-md transition-colors"
+                      >
+                        {copiedId === 'posts' ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5 text-zinc-600" />}
+                      </button>
+                    </div>
                     <ul className="space-y-2">
                       {selected.results.postIdeas.map((item, i) => (
                         <li key={i} className="text-sm text-zinc-400 leading-relaxed">• {item}</li>
@@ -152,10 +167,18 @@ export const History: React.FC<HistoryProps> = ({ user }) => {
                     </ul>
                   </div>
                   <div className="space-y-4">
-                    <h4 className="text-zinc-100 font-bold flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-zinc-500" />
-                      أفكار الفيديوهات
-                    </h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-zinc-100 font-bold flex items-center gap-2">
+                        <Video className="w-4 h-4 text-zinc-500" />
+                        أفكار الفيديوهات
+                      </h4>
+                      <button 
+                        onClick={() => copyToClipboard(selected.results.videoIdeas.join('\n'), 'videos')}
+                        className="p-1.5 hover:bg-zinc-800 rounded-md transition-colors"
+                      >
+                        {copiedId === 'videos' ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5 text-zinc-600" />}
+                      </button>
+                    </div>
                     <ul className="space-y-2">
                       {selected.results.videoIdeas.map((item, i) => (
                         <li key={i} className="text-sm text-zinc-400 leading-relaxed">• {item}</li>
@@ -163,6 +186,36 @@ export const History: React.FC<HistoryProps> = ({ user }) => {
                     </ul>
                   </div>
                 </div>
+
+                {selected.results.hook && (
+                  <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl space-y-2">
+                    <h4 className="text-zinc-100 font-bold text-sm flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-zinc-500" />
+                      الخطاف
+                    </h4>
+                    <p className="text-sm text-zinc-400 italic">"{selected.results.hook}"</p>
+                  </div>
+                )}
+
+                {selected.results.calendar && Array.isArray(selected.results.calendar) && (
+                  <div className="space-y-4 border-t border-zinc-800 pt-6">
+                    <h4 className="text-zinc-100 font-bold flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-zinc-500" />
+                      تقويم المحتوى
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {selected.results.calendar.map((day) => (
+                        <div key={day.day} className="p-3 bg-zinc-950 border border-zinc-800 rounded-xl space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black text-zinc-700">يوم {day.day}</span>
+                            <span className="text-[8px] font-bold text-zinc-500 uppercase">{day.platform}</span>
+                          </div>
+                          <p className="text-xs text-zinc-400 font-medium">{day.topic}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-4 border-t border-zinc-800 pt-6">
                   <h4 className="text-zinc-100 font-bold">الوسوم</h4>

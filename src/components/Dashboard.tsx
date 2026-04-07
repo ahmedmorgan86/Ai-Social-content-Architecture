@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { generateSocialContent } from '../services/geminiService';
+import { generateSocialContent, refineContent } from '../services/geminiService';
 import { ContentResults, UserProfile } from '../types';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { Sparkles, Send, Loader2, Copy, Check, TrendingUp, Calendar, Video, FileText, Hash, Star, Info, Heart } from 'lucide-react';
+import { Sparkles, Send, Loader2, Copy, Check, TrendingUp, Calendar, Video, FileText, Hash, Star, Info, Heart, Share2, Download, Layout, Smartphone, Globe, RefreshCcw, Wand2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 
 import { GoogleAd } from './GoogleAd';
+import { SocialPreview } from './SocialPreview';
 
 interface DashboardProps {
   user: UserProfile;
@@ -17,10 +18,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [niche, setNiche] = useState(user.preferences.niche || '');
   const [activityType, setActivityType] = useState('marketing');
   const [targetAudience, setTargetAudience] = useState('');
+  const [platforms, setPlatforms] = useState<string[]>(['Instagram', 'TikTok']);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ContentResults | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const [activePreview, setActivePreview] = useState(0);
+  const [refineText, setRefineText] = useState('');
+  const [refining, setRefining] = useState(false);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +33,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
     setLoading(true);
     try {
-      const data = await generateSocialContent(niche, activityType, targetAudience);
+      const data = await generateSocialContent(niche, activityType, targetAudience, platforms);
       setResults(data);
 
       await addDoc(collection(db, 'generations'), {
@@ -36,6 +41,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         niche,
         activityType,
         targetAudience,
+        platforms,
         results: data,
         createdAt: serverTimestamp(),
       });
@@ -46,10 +52,64 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     }
   };
 
+  const handleRefine = async () => {
+    if (!results || !refineText) return;
+    setRefining(true);
+    try {
+      const data = await refineContent(results, refineText);
+      setResults(data);
+      setRefineText('');
+    } catch (error) {
+      console.error('Error refining content:', error);
+    } finally {
+      setRefining(false);
+    }
+  };
+
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopied(id);
     setTimeout(() => setCopied(null), 2000);
+  };
+
+  const exportStrategy = () => {
+    if (!results) return;
+    const text = `
+استراتيجية المحتوى لـ ${niche}
+الهدف: ${activityType}
+الجمهور: ${targetAudience || 'عام'}
+المنصات: ${platforms.join(', ')}
+
+أفكار المنشورات:
+${results.postIdeas.join('\n')}
+
+أفكار الفيديوهات:
+${results.videoIdeas.join('\n')}
+
+التعليقات:
+${results.captions.join('\n')}
+
+الوسوم:
+${results.hashtags.join(' ')}
+
+الخطاف:
+${results.hook}
+
+السيناريو:
+${results.script}
+    `;
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `strategy-${niche}.txt`;
+    a.click();
+  };
+
+  const togglePlatform = (p: string) => {
+    setPlatforms(prev => 
+      prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
+    );
   };
 
   const handleSaveFavorite = async (content: string, type: 'post' | 'video' | 'caption', id: string) => {
@@ -118,6 +178,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                   placeholder="مثال: جيل زد، رواد أعمال"
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:ring-2 focus:ring-zinc-700 outline-none transition-all"
                 />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">المنصات</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['Instagram', 'TikTok', 'LinkedIn', 'X'].map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => togglePlatform(p)}
+                      className={cn(
+                        "px-4 py-2 rounded-xl border text-xs font-bold transition-all",
+                        platforms.includes(p) 
+                          ? "bg-zinc-100 border-zinc-100 text-zinc-950" 
+                          : "bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700"
+                      )}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -191,20 +272,124 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                       <span className="text-zinc-500 font-medium">/ 100</span>
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <Star
-                        key={s}
-                        className={cn(
-                          "w-5 h-5",
-                          s <= Math.round(results.score / 20) ? "text-zinc-100 fill-zinc-100" : "text-zinc-700"
-                        )}
-                      />
-                    ))}
+                  <div className="flex items-center gap-4">
+                    <div className="hidden md:flex gap-1">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          className={cn(
+                            "w-5 h-5",
+                            s <= Math.round(results.score / 20) ? "text-zinc-100 fill-zinc-100" : "text-zinc-700"
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => copyToClipboard(JSON.stringify(results, null, 2), 'all')}
+                        className="p-3 bg-zinc-800 text-zinc-100 rounded-xl hover:bg-zinc-700 transition-colors flex items-center gap-2 text-xs font-bold"
+                        title="نسخ كل شيء"
+                      >
+                        {copied === 'all' ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                        <span className="hidden sm:inline">نسخ الكل</span>
+                      </button>
+                      <button 
+                        onClick={exportStrategy}
+                        className="p-3 bg-zinc-100 text-zinc-950 rounded-xl hover:bg-white transition-colors"
+                        title="تصدير الاستراتيجية"
+                      >
+                        <Download className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Refine Section */}
+                <div className="p-6 bg-zinc-900/30 border border-zinc-800/50 rounded-3xl space-y-4">
+                  <div className="flex items-center gap-2 text-zinc-400">
+                    <Wand2 className="w-4 h-4" />
+                    <span className="text-sm font-semibold uppercase tracking-wider">تحسين النتائج</span>
+                  </div>
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      value={refineText}
+                      onChange={(e) => setRefineText(e.target.value)}
+                      placeholder="مثال: اجعلها أكثر احترافية، أضف المزيد من الفكاهة..."
+                      className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2 text-sm text-zinc-100 focus:ring-2 focus:ring-zinc-700 outline-none transition-all"
+                    />
+                    <button
+                      onClick={handleRefine}
+                      disabled={refining || !refineText}
+                      className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 rounded-xl text-xs font-bold text-zinc-100 transition-all flex items-center gap-2"
+                    >
+                      {refining ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
+                      تعديل
+                    </button>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Preview Section */}
+                  <div className="md:col-span-2 p-8 bg-zinc-900/50 border border-zinc-800 rounded-3xl space-y-8">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <h3 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
+                          <Smartphone className="w-5 h-5 text-zinc-500" />
+                          معاينة المحتوى
+                        </h3>
+                        <p className="text-zinc-500 text-sm">كيف سيظهر منشورك على وسائل التواصل الاجتماعي.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        {results.captions.map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setActivePreview(i)}
+                            className={cn(
+                              "w-8 h-8 rounded-lg border text-xs font-bold transition-all",
+                              activePreview === i ? "bg-zinc-100 border-zinc-100 text-zinc-950" : "bg-zinc-950 border-zinc-800 text-zinc-500"
+                            )}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-12 items-center">
+                      <SocialPreview 
+                        displayName={user.displayName || 'مستخدم'} 
+                        photoURL={user.photoURL}
+                        caption={results.captions[activePreview]}
+                        niche={niche}
+                      />
+                      <div className="flex-1 space-y-6">
+                        <div className="p-6 bg-zinc-950 border border-zinc-800 rounded-2xl space-y-4">
+                          <div className="flex items-center gap-2 text-zinc-100 font-bold">
+                            <FileText className="w-4 h-4 text-zinc-500" />
+                            النص المختار
+                          </div>
+                          <p className="text-zinc-400 text-sm leading-relaxed">{results.captions[activePreview]}</p>
+                          <button
+                            onClick={() => copyToClipboard(results.captions[activePreview], `preview-${activePreview}`)}
+                            className="w-full py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-300 hover:bg-zinc-800 transition-all flex items-center justify-center gap-2"
+                          >
+                            {copied === `preview-${activePreview}` ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                            نسخ النص
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-4 bg-zinc-950/50 border border-zinc-800/50 rounded-2xl space-y-1">
+                            <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">المنصة المثالية</div>
+                            <div className="text-sm text-zinc-300 font-bold">{platforms[0]}</div>
+                          </div>
+                          <div className="p-4 bg-zinc-950/50 border border-zinc-800/50 rounded-2xl space-y-1">
+                            <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">وقت النشر المقترح</div>
+                            <div className="text-sm text-zinc-300 font-bold">٧:٠٠ مساءً</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   {/* Post Ideas */}
                   <ResultCard
                     title="أفكار المنشورات"
@@ -290,14 +475,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                   )}
 
                   {results.calendar && (
-                    <div className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-3xl space-y-3">
-                      <h3 className="text-zinc-100 font-bold flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-zinc-400" />
-                        تقويم 7 أيام
-                      </h3>
-                      <p className="text-zinc-400 text-sm whitespace-pre-wrap leading-relaxed">
-                        {results.calendar}
-                      </p>
+                    <div className="p-8 bg-zinc-900/50 border border-zinc-800 rounded-3xl space-y-6">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
+                          <Calendar className="w-5 h-5 text-zinc-500" />
+                          تقويم المحتوى (٧ أيام)
+                        </h3>
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                          <Globe className="w-3 h-3" />
+                          خطة أسبوعية
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+                        {results.calendar.map((day) => (
+                          <div key={day.day} className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl space-y-3 hover:border-zinc-700 transition-all group">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-black text-zinc-700 group-hover:text-zinc-500 transition-colors">يوم {day.day}</span>
+                              <span className="px-2 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[8px] font-bold text-zinc-500 uppercase">{day.platform}</span>
+                            </div>
+                            <p className="text-xs text-zinc-300 font-medium leading-relaxed line-clamp-3">{day.topic}</p>
+                            <div className="pt-2 border-t border-zinc-900">
+                              <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-tighter">{day.format}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

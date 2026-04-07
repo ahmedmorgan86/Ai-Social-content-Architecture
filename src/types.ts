@@ -11,6 +11,13 @@ export interface UserProfile {
   createdAt: any;
 }
 
+export interface CalendarDay {
+  day: number;
+  topic: string;
+  platform: string;
+  format: string;
+}
+
 export interface ContentResults {
   postIdeas: string[];
   videoIdeas: string[];
@@ -19,7 +26,7 @@ export interface ContentResults {
   score: number;
   script?: string;
   hook?: string;
-  calendar?: string;
+  calendar?: CalendarDay[];
 }
 
 export interface ContentGeneration {
