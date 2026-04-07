@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { auth, db, handleFirestoreError, OperationType } from './firebase';
 import { UserProfile, View } from './types';
 import { Auth } from './components/Auth';
 import { Dashboard } from './components/Dashboard';
 import { History } from './components/History';
 import { Profile } from './components/Profile';
 import { Admin } from './components/Admin';
+import { Schedule } from './components/Schedule';
 import { Sidebar } from './components/Sidebar';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles } from 'lucide-react';
 
@@ -19,20 +21,30 @@ export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    let unsubscribeProfile: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        if (userDoc.exists()) {
-          setProfile(userDoc.data() as UserProfile);
-        }
+        const path = `users/${firebaseUser.uid}`;
+        unsubscribeProfile = onSnapshot(doc(db, 'users', firebaseUser.uid), (snapshot) => {
+          if (snapshot.exists()) {
+            setProfile(snapshot.data() as UserProfile);
+          }
+          setLoading(false);
+        }, (error) => {
+          handleFirestoreError(error, OperationType.GET, path);
+        });
       } else {
         setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
   }, []);
 
   const handleProfileUpdate = async (updates: Partial<UserProfile>) => {
@@ -40,6 +52,30 @@ export default function App() {
     const newProfile = { ...profile, ...updates };
     setProfile(newProfile);
     await updateDoc(doc(db, 'users', profile.uid), updates);
+  };
+
+  const getThemeClasses = () => {
+    const theme = profile?.preferences.theme || 'dark';
+    switch (theme) {
+      case 'light': return 'bg-zinc-50 text-zinc-950';
+      case 'emerald': return 'bg-emerald-950 text-emerald-50';
+      case 'rose': return 'bg-rose-950 text-rose-50';
+      case 'amber': return 'bg-amber-950 text-amber-50';
+      case 'blue': return 'bg-blue-950 text-blue-50';
+      default: return 'bg-zinc-950 text-zinc-100';
+    }
+  };
+
+  const getHeaderClasses = () => {
+    const theme = profile?.preferences.theme || 'dark';
+    switch (theme) {
+      case 'light': return 'bg-white/50 border-zinc-200';
+      case 'emerald': return 'bg-emerald-950/50 border-emerald-900';
+      case 'rose': return 'bg-rose-950/50 border-rose-900';
+      case 'amber': return 'bg-amber-950/50 border-amber-900';
+      case 'blue': return 'bg-blue-950/50 border-blue-900';
+      default: return 'bg-zinc-950/50 border-zinc-900';
+    }
   };
 
   if (loading) {
@@ -57,9 +93,9 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${profile?.preferences.theme === 'light' ? 'bg-zinc-50 text-zinc-950' : 'bg-zinc-950 text-zinc-100'}`}>
+    <div className={`min-h-screen transition-colors duration-500 ${getThemeClasses()}`}>
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-zinc-950/50 backdrop-blur-xl border-b border-zinc-900 px-6 py-4">
+      <header className={`fixed top-0 left-0 right-0 z-40 backdrop-blur-xl border-b px-6 py-4 ${getHeaderClasses()}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-zinc-100 rounded-lg flex items-center justify-center">
@@ -103,19 +139,26 @@ export default function App() {
               currentView={currentView} 
               onViewChange={setCurrentView} 
               isAdmin={profile.role === 'admin'} 
+              theme={profile.preferences.theme || 'dark'}
             />
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentView}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
+                initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                transition={{ 
+                  duration: 0.3,
+                  ease: [0.23, 1, 0.32, 1]
+                }}
               >
-                {currentView === 'dashboard' && <Dashboard user={profile} />}
-                {currentView === 'history' && <History user={profile} />}
-                {currentView === 'profile' && <Profile user={profile} onUpdate={handleProfileUpdate} />}
-                {currentView === 'admin' && profile.role === 'admin' && <Admin />}
+                <ErrorBoundary theme={profile.preferences.theme || 'dark'}>
+                  {currentView === 'dashboard' && <Dashboard user={profile} theme={profile.preferences.theme || 'dark'} />}
+                  {currentView === 'history' && <History user={profile} theme={profile.preferences.theme || 'dark'} />}
+                  {currentView === 'schedule' && <Schedule user={profile} theme={profile.preferences.theme || 'dark'} />}
+                  {currentView === 'profile' && <Profile user={profile} onUpdate={handleProfileUpdate} />}
+                  {currentView === 'admin' && profile.role === 'admin' && <Admin user={profile} theme={profile.preferences.theme || 'dark'} />}
+                </ErrorBoundary>
               </motion.div>
             </AnimatePresence>
           </>

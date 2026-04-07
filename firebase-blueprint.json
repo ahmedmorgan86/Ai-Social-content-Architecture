@@ -58,6 +58,52 @@
         "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the favorite was saved." }
       },
       "required": ["userId", "type", "content", "niche", "createdAt"]
+    },
+    "ScheduledPost": {
+      "title": "Scheduled Post",
+      "description": "Stores a content piece scheduled for publishing.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID for the scheduled post." },
+        "userId": { "type": "string", "description": "The ID of the user who scheduled the post." },
+        "content": { "type": "string", "description": "The content to be published." },
+        "platform": { "type": "string", "description": "The target social media platform." },
+        "scheduledAt": { "type": "string", "format": "date-time", "description": "The target publishing time." },
+        "status": { "type": "string", "enum": ["pending", "published", "failed"], "description": "The status of the scheduled post." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the post was scheduled." }
+      },
+      "required": ["userId", "content", "platform", "scheduledAt", "status", "createdAt"]
+    },
+    "ABTest": {
+      "title": "A/B Test",
+      "description": "Stores an A/B test for social media captions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID for the A/B test." },
+        "userId": { "type": "string", "description": "The ID of the user who created the test." },
+        "niche": { "type": "string", "description": "The niche of the content being tested." },
+        "variationA": {
+          "type": "object",
+          "properties": {
+            "content": { "type": "string" },
+            "likes": { "type": "number" },
+            "comments": { "type": "number" },
+            "shares": { "type": "number" }
+          }
+        },
+        "variationB": {
+          "type": "object",
+          "properties": {
+            "content": { "type": "string" },
+            "likes": { "type": "number" },
+            "comments": { "type": "number" },
+            "shares": { "type": "number" }
+          }
+        },
+        "status": { "type": "string", "enum": ["active", "completed"], "description": "The status of the test." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the test was created." }
+      },
+      "required": ["userId", "niche", "variationA", "variationB", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -72,6 +118,14 @@
     "/favorites/{favoriteId}": {
       "schema": "Favorite",
       "description": "User favorite content document."
+    },
+    "/scheduled_posts/{postId}": {
+      "schema": "ScheduledPost",
+      "description": "Scheduled post document."
+    },
+    "/ab_tests/{testId}": {
+      "schema": "ABTest",
+      "description": "A/B test document for social media captions."
     }
   }
 }

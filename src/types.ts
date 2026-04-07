@@ -5,7 +5,7 @@ export interface UserProfile {
   photoURL: string | null;
   role: 'admin' | 'user';
   preferences: {
-    theme: 'light' | 'dark';
+    theme: 'light' | 'dark' | 'emerald' | 'rose' | 'amber' | 'blue';
     niche?: string;
   };
   createdAt: any;
@@ -35,6 +35,8 @@ export interface ContentGeneration {
   niche: string;
   activityType: string;
   targetAudience?: string;
+  tone?: string;
+  duration?: number;
   results: ContentResults;
   createdAt: any;
 }
@@ -48,4 +50,34 @@ export interface Favorite {
   createdAt: any;
 }
 
-export type View = 'dashboard' | 'history' | 'profile' | 'admin';
+export interface ScheduledPost {
+  id: string;
+  userId: string;
+  content: string;
+  platform: string;
+  scheduledAt: any;
+  status: 'pending' | 'published' | 'failed';
+  createdAt: any;
+}
+
+export interface ABTest {
+  id: string;
+  userId: string;
+  niche: string;
+  variationA: {
+    content: string;
+    likes: number;
+    comments: number;
+    shares: number;
+  };
+  variationB: {
+    content: string;
+    likes: number;
+    comments: number;
+    shares: number;
+  };
+  status: 'active' | 'completed';
+  createdAt: any;
+}
+
+export type View = 'dashboard' | 'history' | 'profile' | 'admin' | 'schedule';

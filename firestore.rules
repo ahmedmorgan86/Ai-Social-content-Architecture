@@ -43,8 +43,11 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         (request.auth.token.email == "ahmed.morgan2009@gmail.com" && request.auth.token.email_verified == true));
+        (
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+          (request.auth.token.email == "ahmed.morgan2009@gmail.com" && request.auth.token.email_verified == true)
+        );
     }
 
     function isValidUser(data) {
@@ -73,6 +76,26 @@ service cloud.firestore {
              data.createdAt is timestamp;
     }
 
+    function isValidScheduledPost(data) {
+      return data.keys().hasAll(['userId', 'content', 'platform', 'scheduledAt', 'status', 'createdAt']) &&
+             data.userId is string &&
+             data.content is string &&
+             data.platform is string &&
+             data.scheduledAt is timestamp &&
+             data.status in ['pending', 'published', 'failed'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidABTest(data) {
+      return data.keys().hasAll(['userId', 'niche', 'variationA', 'variationB', 'status', 'createdAt']) &&
+             data.userId is string &&
+             data.niche is string &&
+             data.variationA is map &&
+             data.variationB is map &&
+             data.status in ['active', 'completed'] &&
+             data.createdAt is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -88,10 +111,13 @@ service cloud.firestore {
                     (request.resource.data.role == 'user' || isAdmin());
       
       // Users can update their own profile, but cannot change their role unless admin
+      // Admins can update any user profile
       allow update: if isAuthenticated() && 
                     isValidUser(request.resource.data) && 
-                    isOwner(userId) && 
-                    (request.resource.data.role == resource.data.role || isAdmin());
+                    (
+                      (isOwner(userId) && (request.resource.data.role == resource.data.role || isAdmin())) ||
+                      isAdmin()
+                    );
       
       // Only admin can delete users
       allow delete: if isAdmin();
@@ -127,6 +153,47 @@ service cloud.firestore {
       
       // Favorites are immutable
       allow update: if false;
+    }
+
+    match /scheduled_posts/{postId} {
+      // Users can only read their own scheduled posts
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Users can create scheduled posts for themselves
+      allow create: if isAuthenticated() && 
+                    isValidScheduledPost(request.resource.data) && 
+                    request.resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own scheduled posts
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Only admin can update status
+      allow update: if isAdmin() && 
+                    isValidScheduledPost(request.resource.data) && 
+                    request.resource.data.userId == resource.data.userId &&
+                    request.resource.data.content == resource.data.content &&
+                    request.resource.data.platform == resource.data.platform &&
+                    request.resource.data.scheduledAt == resource.data.scheduledAt &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    match /ab_tests/{testId} {
+      // Users can only read their own A/B tests
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Users can create A/B tests for themselves
+      allow create: if isAuthenticated() && 
+                    isValidABTest(request.resource.data) && 
+                    request.resource.data.userId == request.auth.uid;
+      
+      // Users can update their own A/B tests (for metrics)
+      allow update: if isAuthenticated() && 
+                    isValidABTest(request.resource.data) && 
+                    request.resource.data.userId == request.auth.uid &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+      
+      // Users can delete their own A/B tests
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
   }
 }

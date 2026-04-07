@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Favorite } from '../types';
-import { Settings, Moon, Sun, Shield, User, Bell, Palette, Heart, Trash2, Video, FileText, Send } from 'lucide-react';
+import { Settings, Moon, Sun, Shield, User, Bell, Palette, Heart, Trash2, Video, FileText, Send, Cloud } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { db } from '../firebase';
+import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, where, onSnapshot, deleteDoc, doc, orderBy } from 'firebase/firestore';
 import { cn } from '../lib/utils';
 
@@ -28,6 +28,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setFavorites(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Favorite)));
       setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'favorites');
     });
 
     return () => unsubscribe();
@@ -37,7 +39,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
     try {
       await deleteDoc(doc(db, 'favorites', id));
     } catch (error) {
-      console.error('Error removing favorite:', error);
+      handleFirestoreError(error, OperationType.DELETE, `favorites/${id}`);
     }
   };
 
@@ -48,6 +50,21 @@ export const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
       case 'caption': return <Send className="w-4 h-4" />;
       default: return <Heart className="w-4 h-4" />;
     }
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0 }
   };
 
   return (
@@ -126,21 +143,30 @@ export const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
 
                 {/* Preferences Section */}
                 <section className="p-8 bg-zinc-900/50 border border-zinc-800 rounded-3xl space-y-6">
-                  <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-zinc-500" />
-                    التفضيلات
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+                      <Settings className="w-5 h-5 text-zinc-500" />
+                      التفضيلات
+                    </h3>
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-zinc-800/50 rounded-lg border border-zinc-800">
+                      <Cloud className="w-3 h-3 text-emerald-500" />
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">مزامنة سحابية</span>
+                    </div>
+                  </div>
                   
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <label className="text-xs font-bold uppercase tracking-wider text-zinc-500">المجال الافتراضي</label>
-                      <input
-                        type="text"
-                        value={user.preferences.niche || ''}
-                        onChange={(e) => onUpdate({ preferences: { ...user.preferences, niche: e.target.value } })}
-                        placeholder="مثال: لياقة بدنية"
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:ring-2 focus:ring-zinc-700 outline-none transition-all"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={user.preferences.niche || ''}
+                          onChange={(e) => onUpdate({ preferences: { ...user.preferences, niche: e.target.value } })}
+                          placeholder="مثال: لياقة بدنية"
+                          className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:ring-2 focus:ring-zinc-700 outline-none transition-all"
+                        />
+                      </div>
+                      <p className="text-[10px] text-zinc-600">يتم حفظ التغييرات تلقائياً ومزامنتها عبر جميع أجهزتك.</p>
                     </div>
                   </div>
                 </section>
@@ -172,14 +198,23 @@ export const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
                     المفضلة المحفوظة
                   </h3>
 
-                  <div className="space-y-4">
+                  <motion.div 
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="show"
+                    className="space-y-4"
+                  >
                     {loading ? (
                       <div className="animate-pulse space-y-4">
                         {[1, 2, 3].map(i => <div key={i} className="h-16 bg-zinc-800 rounded-2xl" />)}
                       </div>
                     ) : favorites.length > 0 ? (
                       favorites.map((fav) => (
-                        <div key={fav.id} className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-start gap-4 group">
+                        <motion.div 
+                          key={fav.id} 
+                          variants={itemVariants}
+                          className="p-4 bg-zinc-950 border border-zinc-800 rounded-2xl flex items-start gap-4 group"
+                        >
                           <div className="p-2 bg-zinc-900 rounded-lg text-zinc-500">
                             {getIcon(fav.type)}
                           </div>
@@ -195,15 +230,18 @@ export const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
                             </div>
                             <p className="text-sm text-zinc-300 leading-relaxed">{fav.content}</p>
                           </div>
-                        </div>
+                        </motion.div>
                       ))
                     ) : (
-                      <div className="py-12 text-center text-zinc-600">
+                      <motion.div 
+                        variants={itemVariants}
+                        className="py-12 text-center text-zinc-600"
+                      >
                         <Heart className="w-12 h-12 mx-auto opacity-10 mb-4" />
                         <p>لا توجد مفضلة محفوظة بعد.</p>
-                      </div>
+                      </motion.div>
                     )}
-                  </div>
+                  </motion.div>
                 </section>
               </motion.div>
             )}
@@ -217,22 +255,38 @@ export const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
                 className="space-y-8"
               >
                 <section className="p-8 bg-zinc-900/50 border border-zinc-800 rounded-3xl space-y-6">
-                  <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
-                    <Palette className="w-5 h-5 text-zinc-500" />
-                    إعدادات المظهر
-                  </h3>
-                  
                   <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="text-zinc-100 font-medium">الوضع الليلي</div>
-                      <div className="text-zinc-500 text-sm">التبديل بين الوضع الفاتح والمظلم.</div>
+                    <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+                      <Palette className="w-5 h-5 text-zinc-500" />
+                      إعدادات المظهر
+                    </h3>
+                    <div className="flex items-center gap-1.5 px-2 py-1 bg-zinc-800/50 rounded-lg border border-zinc-800">
+                      <Cloud className="w-3 h-3 text-emerald-500" />
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">مزامنة سحابية</span>
                     </div>
-                    <button 
-                      onClick={() => onUpdate({ preferences: { ...user.preferences, theme: user.preferences.theme === 'dark' ? 'light' : 'dark' } })}
-                      className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl transition-all text-zinc-100"
-                    >
-                      {user.preferences.theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {[
+                      { id: 'dark', label: 'داكن (Zinc)', color: 'bg-zinc-950 border-zinc-800' },
+                      { id: 'light', label: 'فاتح (Zinc)', color: 'bg-zinc-50 border-zinc-200' },
+                      { id: 'emerald', label: 'زمردي (Emerald)', color: 'bg-emerald-950 border-emerald-900' },
+                      { id: 'rose', label: 'وردي (Rose)', color: 'bg-rose-950 border-rose-900' },
+                      { id: 'amber', label: 'كهرماني (Amber)', color: 'bg-amber-950 border-amber-900' },
+                      { id: 'blue', label: 'أزرق (Blue)', color: 'bg-blue-950 border-blue-900' },
+                    ].map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => onUpdate({ preferences: { ...user.preferences, theme: t.id as any } })}
+                        className={cn(
+                          "p-4 rounded-2xl border-2 transition-all text-left space-y-2 group",
+                          user.preferences.theme === t.id ? "border-zinc-100 ring-2 ring-zinc-100/20" : "border-zinc-800 hover:border-zinc-700"
+                        )}
+                      >
+                        <div className={cn("w-full h-12 rounded-xl mb-2", t.color)} />
+                        <div className="text-xs font-bold text-zinc-100">{t.label}</div>
+                      </button>
+                    ))}
                   </div>
                 </section>
               </motion.div>

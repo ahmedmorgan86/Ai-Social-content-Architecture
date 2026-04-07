@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from 'lucide-react';
+import { User, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Instagram, Twitter, Linkedin, Facebook, Youtube, MessageSquare, Pin, Ghost, Check, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface SocialPreviewProps {
@@ -7,11 +7,44 @@ interface SocialPreviewProps {
   photoURL?: string | null;
   caption: string;
   niche: string;
+  platform?: string;
+  onSave?: () => void;
+  isSaving?: boolean;
+  onSchedule?: () => void;
 }
 
-export const SocialPreview: React.FC<SocialPreviewProps> = ({ displayName, photoURL, caption, niche }) => {
+export const SocialPreview: React.FC<SocialPreviewProps> = ({ 
+  displayName, 
+  photoURL, 
+  caption, 
+  niche, 
+  platform = 'Instagram',
+  onSave,
+  isSaving,
+  onSchedule
+}) => {
+  const getPlatformIcon = () => {
+    switch (platform.toLowerCase()) {
+      case 'instagram': return <Instagram className="w-4 h-4 text-pink-500" />;
+      case 'tiktok': return <div className="w-4 h-4 bg-zinc-100 rounded-full flex items-center justify-center"><span className="text-[8px] font-black text-black">T</span></div>;
+      case 'linkedin': return <Linkedin className="w-4 h-4 text-blue-600" />;
+      case 'x': return <Twitter className="w-4 h-4 text-zinc-100" />;
+      case 'facebook': return <Facebook className="w-4 h-4 text-blue-500" />;
+      case 'youtube': return <Youtube className="w-4 h-4 text-red-600" />;
+      case 'threads': return <MessageSquare className="w-4 h-4 text-zinc-100" />;
+      case 'pinterest': return <Pin className="w-4 h-4 text-red-500" />;
+      case 'snapchat': return <Ghost className="w-4 h-4 text-yellow-400" />;
+      default: return <Instagram className="w-4 h-4 text-zinc-500" />;
+    }
+  };
+
   return (
-    <div className="w-full max-w-[320px] mx-auto bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
+    <div className="w-full max-w-[320px] mx-auto bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
+      {/* Platform Badge */}
+      <div className="absolute top-6 right-6 z-20 bg-zinc-900/80 backdrop-blur-md p-2 rounded-full border border-zinc-800 shadow-lg">
+        {getPlatformIcon()}
+      </div>
+
       {/* Header */}
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -40,9 +73,26 @@ export const SocialPreview: React.FC<SocialPreviewProps> = ({ displayName, photo
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Heart className="w-6 h-6 text-zinc-100" />
+            <button 
+              onClick={onSave}
+              disabled={isSaving}
+              className="transition-all hover:scale-110 active:scale-95"
+            >
+              {isSaving ? (
+                <Check className="w-6 h-6 text-green-400" />
+              ) : (
+                <Heart className="w-6 h-6 text-zinc-100 hover:text-red-500 transition-colors" />
+              )}
+            </button>
             <MessageCircle className="w-6 h-6 text-zinc-100" />
             <Send className="w-6 h-6 text-zinc-100" />
+            <button 
+              onClick={onSchedule}
+              className="transition-all hover:scale-110 active:scale-95 text-zinc-100 hover:text-blue-400"
+              title="جدولة المنشور"
+            >
+              <Clock className="w-6 h-6" />
+            </button>
           </div>
           <Bookmark className="w-6 h-6 text-zinc-100" />
         </div>
