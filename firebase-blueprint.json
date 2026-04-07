@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user information and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique user ID from Firebase Auth." },
+        "displayName": { "type": "string", "description": "The user's full name." },
+        "email": { "type": "string", "description": "The user's email address." },
+        "photoURL": { "type": "string", "description": "The user's profile picture URL." },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "The user's role (admin or user)." },
+        "preferences": {
+          "type": "object",
+          "properties": {
+            "theme": { "type": "string", "enum": ["light", "dark"], "description": "The user's preferred theme." },
+            "niche": { "type": "string", "description": "The user's primary content niche." }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the profile was created." }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "ContentGeneration": {
+      "title": "Content Generation",
+      "description": "Stores AI-generated content results.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID for the generation." },
+        "userId": { "type": "string", "description": "The ID of the user who generated the content." },
+        "niche": { "type": "string", "description": "The niche for the content." },
+        "activityType": { "type": "string", "description": "The type of activity (marketing, education, etc.)." },
+        "targetAudience": { "type": "string", "description": "The optional target audience." },
+        "results": {
+          "type": "object",
+          "properties": {
+            "postIdeas": { "type": "array", "items": { "type": "string" } },
+            "videoIdeas": { "type": "array", "items": { "type": "string" } },
+            "captions": { "type": "array", "items": { "type": "string" } },
+            "hashtags": { "type": "array", "items": { "type": "string" } },
+            "score": { "type": "number", "description": "AI-generated content quality score." }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the content was generated." }
+      },
+      "required": ["userId", "niche", "activityType", "results", "createdAt"]
+    },
+    "Favorite": {
+      "title": "Favorite",
+      "description": "Stores a user's favorite content piece.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique ID for the favorite." },
+        "userId": { "type": "string", "description": "The ID of the user who saved the favorite." },
+        "type": { "type": "string", "enum": ["post", "video", "caption"], "description": "The type of content saved." },
+        "content": { "type": "string", "description": "The actual content text." },
+        "niche": { "type": "string", "description": "The niche of the content." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the favorite was saved." }
+      },
+      "required": ["userId", "type", "content", "niche", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document."
+    },
+    "/generations/{generationId}": {
+      "schema": "ContentGeneration",
+      "description": "Generated content document."
+    },
+    "/favorites/{favoriteId}": {
+      "schema": "Favorite",
+      "description": "User favorite content document."
+    }
+  }
+}
