@@ -12,7 +12,7 @@ export async function generateSocialContent(
   duration: number = 7
 ): Promise<ContentResults> {
   const model = ai.models.generateContent({
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-2.0-flash",
     contents: `قم بإنشاء محتوى احترافي لوسائل التواصل الاجتماعي لمجال ${niche} مع التركيز على ${activityType}. ${
       targetAudience ? `الجمهور المستهدف: ${targetAudience}.` : ""
     } المنصات المستهدفة: ${platforms.join(', ')}.
@@ -74,7 +74,7 @@ export async function refineContent(
   instruction: string
 ): Promise<ContentResults> {
   const model = ai.models.generateContent({
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-2.0-flash",
     contents: `لديك استراتيجية محتوى سابقة: ${JSON.stringify(previousResults)}.
     المطلوب هو تعديل هذه الاستراتيجية بناءً على التعليمات التالية: "${instruction}".
     يجب أن تظل جميع النتائج باللغة العربية الفصحى وبنفس التنسيق السابق.

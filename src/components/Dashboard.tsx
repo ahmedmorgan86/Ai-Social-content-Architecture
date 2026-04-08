@@ -90,6 +90,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, theme }) => {
     return () => unsubscribe();
   }, [user.uid]);
 
+  const handleSelectForAB = (content: string) => {
+    if (!abVariationA) {
+      setAbVariationA(content);
+      setActiveTab('abtest');
+    } else {
+      handleCreateABTest(content);
+    }
+  };
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!niche) return;
@@ -333,10 +342,10 @@ ${results.script}
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <header className="space-y-2">
-        <h1 className={cn("text-4xl font-bold tracking-tight", getTextClasses())}>
-          مهندس <span className={cn("italic", getMutedTextClasses())}>المحتوى</span>
+        <h1 className={cn("text-4xl font-black tracking-tighter uppercase", getTextClasses())}>
+          Vantage <span className={cn("italic font-medium", getMutedTextClasses())}>AI</span>
         </h1>
-        <p className={getMutedTextClasses()}>أنشئ استراتيجيات تواصل اجتماعي عالمية في ثوانٍ.</p>
+        <p className={cn("text-sm font-medium", getMutedTextClasses())}>المنصة العالمية الرائدة للذكاء الاستراتيجي وصناعة المحتوى.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -770,7 +779,7 @@ ${results.script}
                           onCopy={(text: string) => copyToClipboard(text, 'posts')}
                           onSave={(content: string, id: string) => handleSaveFavorite(content, 'post', id)}
                           onSchedule={(content: string) => setSchedulingPost({ content, platform: platforms[0] || 'Instagram' })}
-                          onABTest={() => {}}
+                          onABTest={handleSelectForAB}
                           isCopied={copied === 'posts'}
                           savingId={saving}
                           selectingForAB={selectingForAB}
@@ -789,7 +798,7 @@ ${results.script}
                           onCopy={(text: string) => copyToClipboard(text, 'videos')}
                           onSave={(content: string, id: string) => handleSaveFavorite(content, 'video', id)}
                           onSchedule={(content: string) => setSchedulingPost({ content, platform: platforms[0] || 'TikTok' })}
-                          onABTest={() => {}}
+                          onABTest={handleSelectForAB}
                           isCopied={copied === 'videos'}
                           savingId={saving}
                           selectingForAB={selectingForAB}
@@ -911,13 +920,7 @@ ${results.script}
                           onCopy={(text: string) => copyToClipboard(text, 'captions')}
                           onSave={(content: string, id: string) => handleSaveFavorite(content, 'caption', id)}
                           onSchedule={(content: string) => setSchedulingPost({ content, platform: previewPlatform })}
-                          onABTest={(content: string) => {
-                            if (!abVariationA) {
-                              setAbVariationA(content);
-                            } else {
-                              handleCreateABTest(content);
-                            }
-                          }}
+                          onABTest={handleSelectForAB}
                           isCopied={copied === 'captions'}
                           savingId={saving}
                           selectingForAB={selectingForAB}
@@ -1150,6 +1153,18 @@ ${results.script}
                                   </div>
                                 </div>
 
+                                {test.status === 'active' && (
+                                  <button
+                                    onClick={() => handleCloseABTest(test.id)}
+                                    className={cn(
+                                      "w-full py-3 rounded-2xl text-xs font-bold transition-all border",
+                                      theme === 'light' ? 'bg-zinc-100 border-zinc-200 text-zinc-950 hover:bg-zinc-200' : 'bg-zinc-900 border-zinc-800 text-zinc-100 hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    إنهاء الاختبار وتحديد الفائز
+                                  </button>
+                                )}
+
                                 {/* Performance Bar */}
                                 <div className="space-y-2">
                                   <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-zinc-500">
@@ -1374,11 +1389,11 @@ const ResultCard = ({ title, type, icon, items, onCopy, onSave, onSchedule, onAB
                   className={cn(
                     "p-1.5 rounded-md transition-all", 
                     theme === 'light' ? 'hover:bg-zinc-100' : 'hover:bg-zinc-800',
-                    isSelectedA ? "text-emerald-500" : (theme === 'light' ? 'text-zinc-300' : 'text-zinc-600')
+                    isSelectedA ? "text-emerald-500 bg-emerald-500/10" : (theme === 'light' ? 'text-zinc-300' : 'text-zinc-600')
                   )}
                   title={abVariationA ? "اختيار كخيار B" : "اختيار كخيار A"}
                 >
-                  <Split className="w-3.5 h-3.5 hover:text-emerald-400" />
+                  <Split className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
