@@ -1,7 +1,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
     // ===============================================================
     // Assumed Data Model
     // ===============================================================
@@ -13,7 +12,7 @@ service cloud.firestore {
     //   - displayName: string (optional)
     //   - email: string (required)
     //   - photoURL: string (optional)
-    //   - role: string (required, 'admin' or 'user')
+    //   - role: string (required, 'admin' | 'user')
     //   - preferences: map (optional)
     //   - createdAt: timestamp (required)
     //
@@ -23,8 +22,36 @@ service cloud.firestore {
     //   - userId: string (required)
     //   - niche: string (required)
     //   - activityType: string (required)
-    //   - targetAudience: string (optional)
     //   - results: map (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: favorites
+    // Document ID: {favoriteId}
+    // Fields:
+    //   - userId: string (required)
+    //   - type: string (required, 'post' | 'video' | 'caption')
+    //   - content: string (required)
+    //   - niche: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: scheduled_posts
+    // Document ID: {postId}
+    // Fields:
+    //   - userId: string (required)
+    //   - content: string (required)
+    //   - platform: string (required)
+    //   - scheduledAt: timestamp (required)
+    //   - status: string (required, 'pending' | 'published' | 'failed')
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: ab_tests
+    // Document ID: {testId}
+    // Fields:
+    //   - userId: string (required)
+    //   - niche: string (required)
+    //   - variationA: map (required)
+    //   - variationB: map (required)
+    //   - status: string (required, 'active' | 'completed')
     //   - createdAt: timestamp (required)
     //
     // ===============================================================
@@ -32,7 +59,7 @@ service cloud.firestore {
     // ===============================================================
     // Helper Functions
     // ===============================================================
-
+    
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -41,159 +68,105 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isUserDocOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
     function isAdmin() {
       return isAuthenticated() &&
-        (
-          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-          (request.auth.token.email == "ahmed.morgan2009@gmail.com" && request.auth.token.email_verified == true)
-        );
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "ahmed.morgan2009@gmail.com" && request.auth.token.email_verified == true));
     }
 
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'email', 'role', 'createdAt']) &&
-             data.uid is string &&
-             data.email is string &&
-             data.role in ['admin', 'user'] &&
-             data.createdAt is timestamp;
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     }
 
-    function isValidGeneration(data) {
-      return data.keys().hasAll(['userId', 'niche', 'activityType', 'results', 'createdAt']) &&
-             data.userId is string &&
-             data.niche is string &&
-             data.activityType is string &&
-             data.results is map &&
-             data.createdAt is timestamp;
-    }
-
-    function isValidFavorite(data) {
-      return data.keys().hasAll(['userId', 'type', 'content', 'niche', 'createdAt']) &&
-             data.userId is string &&
-             data.type in ['post', 'video', 'caption'] &&
-             data.content is string &&
-             data.niche is string &&
-             data.createdAt is timestamp;
-    }
-
-    function isValidScheduledPost(data) {
-      return data.keys().hasAll(['userId', 'content', 'platform', 'scheduledAt', 'status', 'createdAt']) &&
-             data.userId is string &&
-             data.content is string &&
-             data.platform is string &&
-             data.scheduledAt is timestamp &&
-             data.status in ['pending', 'published', 'failed'] &&
-             data.createdAt is timestamp;
-    }
-
-    function isValidABTest(data) {
-      return data.keys().hasAll(['userId', 'niche', 'variationA', 'variationB', 'status', 'createdAt']) &&
-             data.userId is string &&
-             data.niche is string &&
-             data.variationA is map &&
-             data.variationB is map &&
-             data.status in ['active', 'completed'] &&
-             data.createdAt is timestamp;
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
     }
 
     // ===============================================================
-    // Rules
+    // Collection Rules
     // ===============================================================
 
     match /users/{userId} {
-      // Users can only read their own profile, unless they are admin
-      allow read: if isOwner(userId) || isAdmin();
-      
-      // Users can create their own profile, but only admin can create admin roles
-      allow create: if isAuthenticated() && 
-                    isValidUser(request.resource.data) && 
-                    isOwner(userId) && 
-                    (request.resource.data.role == 'user' || isAdmin());
-      
-      // Users can update their own profile, but cannot change their role unless admin
-      // Admins can update any user profile
-      allow update: if isAuthenticated() && 
-                    isValidUser(request.resource.data) && 
-                    (
-                      (isOwner(userId) && (request.resource.data.role == resource.data.role || isAdmin())) ||
-                      isAdmin()
-                    );
-      
-      // Only admin can delete users
-      allow delete: if isAdmin();
+      function isValidUser(data) {
+        return data.uid is string && 
+               data.email is string && isValidEmail(data.email) &&
+               data.role in ['admin', 'user'] &&
+               data.createdAt is timestamp;
+      }
+
+      allow read: if isUserDocOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && 
+                      ((isUserDocOwner(userId) && request.resource.data.role == 'user') || isAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && 
+                      ((isUserDocOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin());
     }
 
     match /generations/{generationId} {
-      // Users can read their own generations, admin can read all
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      
-      // Users can create generations for themselves
-      allow create: if isAuthenticated() && 
-                    isValidGeneration(request.resource.data) && 
-                    request.resource.data.userId == request.auth.uid;
-      
-      // Users can delete their own generations, admin can delete all
-      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      
-      // Generations are immutable
-      allow update: if false;
+      function isValidGeneration(data) {
+        return data.userId is string &&
+               data.niche is string && data.niche.size() < 200 &&
+               data.results is map &&
+               data.createdAt is timestamp;
+      }
+
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidGeneration(request.resource.data) && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidGeneration(request.resource.data) && isDocOwner();
+      allow delete: if isDocOwner() || isAdmin();
     }
 
     match /favorites/{favoriteId} {
-      // Users can only read their own favorites
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      
-      // Users can create favorites for themselves
-      allow create: if isAuthenticated() && 
-                    isValidFavorite(request.resource.data) && 
-                    request.resource.data.userId == request.auth.uid;
-      
-      // Users can delete their own favorites
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      
-      // Favorites are immutable
-      allow update: if false;
+      function isValidFavorite(data) {
+        return data.userId is string &&
+               data.type in ['post', 'video', 'caption'] &&
+               data.content is string && data.content.size() < 5000 &&
+               data.createdAt is timestamp;
+      }
+
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidFavorite(request.resource.data) && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidFavorite(request.resource.data) && isDocOwner();
+      allow delete: if isDocOwner() || isAdmin();
     }
 
     match /scheduled_posts/{postId} {
-      // Users can only read their own scheduled posts
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      
-      // Users can create scheduled posts for themselves
-      allow create: if isAuthenticated() && 
-                    isValidScheduledPost(request.resource.data) && 
-                    request.resource.data.userId == request.auth.uid;
-      
-      // Users can delete their own scheduled posts
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      
-      // Only admin can update status
-      allow update: if isAdmin() && 
-                    isValidScheduledPost(request.resource.data) && 
-                    request.resource.data.userId == resource.data.userId &&
-                    request.resource.data.content == resource.data.content &&
-                    request.resource.data.platform == resource.data.platform &&
-                    request.resource.data.scheduledAt == resource.data.scheduledAt &&
-                    request.resource.data.createdAt == resource.data.createdAt;
+      function isValidScheduledPost(data) {
+        return data.userId is string &&
+               data.content is string && data.content.size() < 5000 &&
+               data.platform is string &&
+               data.status in ['pending', 'published', 'failed'] &&
+               data.createdAt is timestamp;
+      }
+
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidScheduledPost(request.resource.data) && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidScheduledPost(request.resource.data) && isDocOwner();
+      allow delete: if isDocOwner() || isAdmin();
     }
 
     match /ab_tests/{testId} {
-      // Users can only read their own A/B tests
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      
-      // Users can create A/B tests for themselves
-      allow create: if isAuthenticated() && 
-                    isValidABTest(request.resource.data) && 
-                    request.resource.data.userId == request.auth.uid;
-      
-      // Users can update their own A/B tests (for metrics)
-      allow update: if isAuthenticated() && 
-                    isValidABTest(request.resource.data) && 
-                    request.resource.data.userId == request.auth.uid &&
-                    request.resource.data.createdAt == resource.data.createdAt;
-      
-      // Users can delete their own A/B tests
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      function isValidABTest(data) {
+        return data.userId is string &&
+               data.niche is string &&
+               data.variationA is map &&
+               data.variationB is map &&
+               data.status in ['active', 'completed'] &&
+               data.createdAt is timestamp;
+      }
+
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isAuthenticated() && isValidABTest(request.resource.data) && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidABTest(request.resource.data) && isDocOwner();
+      allow delete: if isDocOwner() || isAdmin();
     }
   }
 }

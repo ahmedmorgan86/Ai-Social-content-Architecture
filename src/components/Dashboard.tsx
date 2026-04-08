@@ -3,7 +3,7 @@ import { generateSocialContent, refineContent } from '../services/geminiService'
 import { ContentResults, UserProfile } from '../types';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import { Sparkles, Send, Loader2, Copy, Check, TrendingUp, Calendar, Video, FileText, Hash, Star, Info, Heart, Share2, Download, Layout, Smartphone, Globe, RefreshCcw, Wand2, Instagram, Twitter, Linkedin, Facebook, Youtube, MessageSquare, Pin, Ghost, Shield, ChevronDown, X as CloseIcon, Clock, Split, BarChart2, ThumbsUp, MessageCircle, Trash2 } from 'lucide-react';
+import { Zap, Send, Loader2, Copy, Check, TrendingUp, Calendar, Video, FileText, Hash, Star, Info, Heart, Share2, Download, Layout, Smartphone, Globe, RefreshCcw, Wand2, Instagram, Twitter, Linkedin, Facebook, Youtube, MessageSquare, Pin, Ghost, Shield, ChevronDown, X as CloseIcon, Clock, Split, BarChart2, ThumbsUp, MessageCircle, Trash2, Trophy, Crown, Target, Lightbulb, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 
@@ -14,6 +14,20 @@ interface DashboardProps {
   user: UserProfile;
   theme: string;
 }
+
+interface NavigationItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const DASHBOARD_TABS: NavigationItem[] = [
+  { id: 'strategy', label: 'الاستراتيجية', icon: <Target className="w-4 h-4" /> },
+  { id: 'ideas', label: 'الأفكار', icon: <Lightbulb className="w-4 h-4" /> },
+  { id: 'content', label: 'المحتوى', icon: <FileText className="w-4 h-4" /> },
+  { id: 'calendar', label: 'الجدول الزمني', icon: <Calendar className="w-4 h-4" /> },
+  { id: 'abtest', label: 'اختبار A/B', icon: <Split className="w-4 h-4" /> },
+];
 
 const PLATFORM_OPTIONS = [
   { id: 'Instagram', icon: <Instagram className="w-3.5 h-3.5" /> },
@@ -48,6 +62,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, theme }) => {
   const [copied, setCopied] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
   const [activePreview, setActivePreview] = useState(0);
+  const [activeTab, setActiveTab] = useState('strategy');
   const [previewPlatform, setPreviewPlatform] = useState('Instagram');
   const [refineText, setRefineText] = useState('');
   const [refining, setRefining] = useState(false);
@@ -480,20 +495,59 @@ ${results.script}
               </div>
             </div>
 
-            <button
+            <motion.button
               type="submit"
               disabled={loading || !niche}
-              className={cn("w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all", theme === 'light' ? 'bg-zinc-950 text-zinc-100 hover:bg-black' : 'bg-zinc-100 text-zinc-950 hover:bg-white')}
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  إنشاء الاستراتيجية
-                </>
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className={cn(
+                "w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all relative overflow-hidden group shadow-xl", 
+                theme === 'light' ? 'bg-zinc-950 text-zinc-100 hover:bg-zinc-900' : 'bg-zinc-100 text-zinc-950 hover:bg-white'
               )}
-            </button>
+            >
+              <AnimatePresence mode="wait">
+                {loading ? (
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex items-center gap-3"
+                  >
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Loader2 className="w-5 h-5" />
+                    </motion.div>
+                    <motion.span
+                      animate={{ opacity: [1, 0.5, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      جاري تحليل البيانات...
+                    </motion.span>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="idle"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex items-center gap-2"
+                  >
+                    <Zap className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                    <span>إنشاء الاستراتيجية الذكية</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {/* Shimmer effect */}
+              <motion.div 
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full"
+                animate={loading ? { translateX: ['-100%', '200%'] } : {}}
+                transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+              />
+            </motion.button>
           </form>
 
           {/* Trending Section */}
@@ -533,95 +587,232 @@ ${results.script}
                 exit="hidden"
                 className="space-y-6"
               >
-                {/* Score Card */}
+                {/* Tabbed Navigation */}
                 <motion.div 
                   variants={itemVariants}
-                  className={cn("p-6 rounded-3xl border flex items-center justify-between", theme === 'light' ? 'bg-zinc-100 border-zinc-200' : 'bg-gradient-to-br from-zinc-800 to-zinc-900 border-zinc-700')}
+                  className={cn("flex items-center gap-1 p-1 border rounded-2xl overflow-x-auto no-scrollbar", theme === 'light' ? 'bg-zinc-100 border-zinc-200' : 'bg-zinc-900 border-zinc-800')}
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className={cn("text-sm font-medium uppercase tracking-wider", getMutedTextClasses())}>درجة الاستراتيجية</h3>
-                      <div className="relative group">
-                        <Info className={cn("w-3.5 h-3.5 cursor-help transition-colors", getMutedTextClasses())} />
-                        <div className={cn("absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 border rounded-xl text-[10px] opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-50 shadow-2xl leading-relaxed", theme === 'light' ? 'bg-white border-zinc-200 text-zinc-600' : 'bg-zinc-950 border-zinc-800 text-zinc-400')}>
-                          تشير هذه الدرجة إلى احتمالية النجاح المتوقعة لهذه الاستراتيجية، بناءً على مقاييس التفاعل وتحليل الاتجاهات.
-                          <div className={cn("absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent", theme === 'light' ? 'border-t-zinc-200' : 'border-t-zinc-800')} />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={cn("text-4xl font-black", getTextClasses())}>{results.score}</span>
-                      <span className={getMutedTextClasses()}>/ 100</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="hidden md:flex gap-1">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Star
-                          key={s}
-                          className={cn(
-                            "w-5 h-5",
-                            s <= Math.round(results.score / 20) 
-                              ? (theme === 'light' ? "text-zinc-950 fill-zinc-950" : "text-zinc-100 fill-zinc-100") 
-                              : (theme === 'light' ? "text-zinc-200" : "text-zinc-700")
-                          )}
-                        />
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => copyToClipboard(JSON.stringify(results, null, 2), 'all')}
-                        className={cn("p-3 rounded-xl transition-colors flex items-center gap-2 text-xs font-bold", theme === 'light' ? 'bg-zinc-200 text-zinc-950 hover:bg-zinc-300' : 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700')}
-                        title="نسخ كل شيء"
-                      >
-                        {copied === 'all' ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-                        <span className="hidden sm:inline">نسخ الكل</span>
-                      </button>
-                      <button 
-                        onClick={exportStrategy}
-                        className={cn("p-3 rounded-xl transition-colors", theme === 'light' ? 'bg-zinc-950 text-zinc-100 hover:bg-black' : 'bg-zinc-100 text-zinc-950 hover:bg-white')}
-                        title="تصدير الاستراتيجية"
-                      >
-                        <Download className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Refine Section */}
-                <motion.div 
-                  variants={itemVariants}
-                  className={cn("p-6 border rounded-3xl space-y-4", getSurfaceClasses())}
-                >
-                  <div className={cn("flex items-center gap-2", getMutedTextClasses())}>
-                    <Wand2 className="w-4 h-4" />
-                    <span className="text-sm font-semibold uppercase tracking-wider">تحسين النتائج</span>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <textarea
-                      value={refineText}
-                      onChange={(e) => setRefineText(e.target.value)}
-                      placeholder="مثال: اجعلها أكثر احترافية، أضف المزيد من الفكاهة، أو ركز على فوائد المنتج..."
-                      rows={2}
-                      className={cn("flex-1 rounded-xl px-4 py-3 text-sm border outline-none transition-all resize-none", getInputClasses())}
-                    />
+                  {DASHBOARD_TABS.map((tab) => (
                     <button
-                      onClick={handleRefine}
-                      disabled={refining || !refineText}
-                      className={cn("px-6 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 h-fit sm:h-auto", theme === 'light' ? 'bg-zinc-950 text-zinc-100 hover:bg-black' : 'bg-zinc-100 text-zinc-950 hover:bg-white')}
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap relative",
+                        activeTab === tab.id
+                          ? (theme === 'light' ? "bg-white text-zinc-950 shadow-sm" : "bg-zinc-800 text-zinc-100 shadow-lg")
+                          : (theme === 'light' ? "text-zinc-500 hover:text-zinc-700" : "text-zinc-500 hover:text-zinc-300")
+                      )}
                     >
-                      {refining ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
-                      تعديل النتائج
+                      {tab.icon}
+                      {tab.label}
+                      {activeTab === tab.id && (
+                        <motion.div
+                          layoutId="activeTab"
+                          className={cn("absolute inset-0 rounded-xl border-2", theme === 'light' ? "border-zinc-950/5" : "border-white/5")}
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
                     </button>
-                  </div>
+                  ))}
                 </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Preview Section */}
-                  <motion.div 
-                    variants={itemVariants}
-                    className={cn("md:col-span-2 p-8 border rounded-3xl space-y-8", getSurfaceClasses())}
-                  >
+                {/* Tab Content */}
+                <AnimatePresence mode="wait">
+                  {activeTab === 'strategy' && results && (
+                    <motion.div
+                      key="strategy"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="space-y-6"
+                    >
+                      {/* Score Card */}
+                      <motion.div 
+                        variants={itemVariants}
+                        className={cn("p-6 rounded-3xl border flex items-center justify-between", theme === 'light' ? 'bg-zinc-100 border-zinc-200' : 'bg-gradient-to-br from-zinc-800 to-zinc-900 border-zinc-700')}
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className={cn("text-sm font-medium uppercase tracking-wider", getMutedTextClasses())}>درجة الاستراتيجية</h3>
+                            <div className="relative group">
+                              <Info className={cn("w-3.5 h-3.5 cursor-help transition-colors", getMutedTextClasses())} />
+                              <div className={cn("absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 border rounded-xl text-[10px] opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 translate-y-1 group-hover:translate-y-0 z-50 shadow-2xl leading-relaxed", theme === 'light' ? 'bg-white border-zinc-200 text-zinc-600' : 'bg-zinc-950 border-zinc-800 text-zinc-400')}>
+                                تشير هذه الدرجة إلى احتمالية النجاح المتوقعة لهذه الاستراتيجية، بناءً على مقاييس التفاعل وتحليل الاتجاهات.
+                                <div className={cn("absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent", theme === 'light' ? 'border-t-zinc-200' : 'border-t-zinc-800')} />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={cn("text-4xl font-black", getTextClasses())}>{results.score}</span>
+                            <span className={getMutedTextClasses()}>/ 100</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="hidden md:flex gap-1">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                className={cn(
+                                  "w-5 h-5",
+                                  s <= Math.round(results.score / 20) 
+                                    ? (theme === 'light' ? "text-zinc-950 fill-zinc-950" : "text-zinc-100 fill-zinc-100") 
+                                    : (theme === 'light' ? "text-zinc-200" : "text-zinc-700")
+                                )}
+                              />
+                            ))}
+                          </div>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => copyToClipboard(JSON.stringify(results, null, 2), 'all')}
+                              className={cn("p-3 rounded-xl transition-colors flex items-center gap-2 text-xs font-bold", theme === 'light' ? 'bg-zinc-200 text-zinc-950 hover:bg-zinc-300' : 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700')}
+                              title="نسخ كل شيء"
+                            >
+                              {copied === 'all' ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                              <span className="hidden sm:inline">نسخ الكل</span>
+                            </button>
+                            <button 
+                              onClick={exportStrategy}
+                              className={cn("p-3 rounded-xl transition-colors", theme === 'light' ? 'bg-zinc-950 text-zinc-100 hover:bg-black' : 'bg-zinc-100 text-zinc-950 hover:bg-white')}
+                              title="تصدير الاستراتيجية"
+                            >
+                              <Download className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+
+                      {/* Refine Section */}
+                      <motion.div 
+                        variants={itemVariants}
+                        className={cn("p-8 border rounded-3xl space-y-6", getSurfaceClasses())}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-5 h-5 text-amber-400" />
+                          <h3 className={cn("text-lg font-bold", getTextClasses())}>تحسين الاستراتيجية</h3>
+                        </div>
+                        <div className="flex gap-3">
+                          <textarea
+                            value={refineText}
+                            onChange={(e) => setRefineText(e.target.value)}
+                            placeholder="مثال: ركز أكثر على تيك توك، أو اجعل الأسلوب أكثر مرحاً..."
+                            rows={2}
+                            className={cn("flex-1 px-4 py-3 rounded-xl border text-sm transition-all outline-none resize-none", theme === 'light' ? 'bg-zinc-50 border-zinc-200 focus:border-zinc-950' : 'bg-zinc-950 border-zinc-800 focus:border-zinc-100')}
+                          />
+                          <motion.button
+                            onClick={handleRefine}
+                            disabled={refining || !refineText}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className={cn(
+                              "px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition-all h-fit self-end",
+                              theme === 'light' ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-950',
+                              (refining || !refineText) && "opacity-50 cursor-not-allowed"
+                            )}
+                          >
+                            {refining ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
+                            <span>تعديل</span>
+                          </motion.button>
+                        </div>
+                      </motion.div>
+
+                      {/* Advanced Features */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {results.hook && (
+                          <motion.div 
+                            variants={itemVariants}
+                            className={cn("p-6 border rounded-3xl space-y-4", getSurfaceClasses())}
+                          >
+                            <h3 className={cn("font-bold flex items-center gap-2", getTextClasses())}>
+                              <Zap className="w-5 h-5 text-amber-400" />
+                              الخُطّاف (Hook)
+                            </h3>
+                            <p className={cn("text-sm leading-relaxed", theme === 'light' ? 'text-zinc-600' : 'text-zinc-400')}>
+                              {results.hook}
+                            </p>
+                          </motion.div>
+                        )}
+                        {results.script && (
+                          <motion.div 
+                            variants={itemVariants}
+                            className={cn("p-6 border rounded-3xl space-y-4", getSurfaceClasses())}
+                          >
+                            <h3 className={cn("font-bold flex items-center gap-2", getTextClasses())}>
+                              <Video className={cn("w-5 h-5", getMutedTextClasses())} />
+                              سيناريو الفيديو
+                            </h3>
+                            <pre className={cn("text-sm whitespace-pre-wrap font-sans leading-relaxed", theme === 'light' ? 'text-zinc-600' : 'text-zinc-400')}>
+                              {results.script}
+                            </pre>
+                          </motion.div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {activeTab === 'ideas' && results && (
+                    <motion.div
+                      key="ideas"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                    >
+                      {/* Post Ideas */}
+                      <motion.div variants={itemVariants}>
+                        <ResultCard
+                          title="أفكار المنشورات"
+                          type="post"
+                          theme={theme}
+                          icon={<FileText className="w-5 h-5" />}
+                          items={results.postIdeas}
+                          onCopy={(text: string) => copyToClipboard(text, 'posts')}
+                          onSave={(content: string, id: string) => handleSaveFavorite(content, 'post', id)}
+                          onSchedule={(content: string) => setSchedulingPost({ content, platform: platforms[0] || 'Instagram' })}
+                          onABTest={() => {}}
+                          isCopied={copied === 'posts'}
+                          savingId={saving}
+                          selectingForAB={selectingForAB}
+                          abVariationA={abVariationA}
+                        />
+                      </motion.div>
+
+                      {/* Video Ideas */}
+                      <motion.div variants={itemVariants}>
+                        <ResultCard
+                          title="أفكار الفيديوهات"
+                          type="video"
+                          theme={theme}
+                          icon={<Video className="w-5 h-5" />}
+                          items={results.videoIdeas}
+                          onCopy={(text: string) => copyToClipboard(text, 'videos')}
+                          onSave={(content: string, id: string) => handleSaveFavorite(content, 'video', id)}
+                          onSchedule={(content: string) => setSchedulingPost({ content, platform: platforms[0] || 'TikTok' })}
+                          onABTest={() => {}}
+                          isCopied={copied === 'videos'}
+                          savingId={saving}
+                          selectingForAB={selectingForAB}
+                          abVariationA={abVariationA}
+                        />
+                      </motion.div>
+                    </motion.div>
+                  )}
+
+                  {activeTab === 'content' && results && (
+                    <motion.div
+                      key="content"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="space-y-6"
+                    >
+                      {/* Preview Section */}
+                      <motion.div 
+                        variants={itemVariants}
+                        className={cn("p-8 border rounded-3xl space-y-8", getSurfaceClasses())}
+                      >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-1">
                         <h3 className={cn("text-xl font-bold flex items-center gap-2", getTextClasses())}>
@@ -654,6 +845,7 @@ ${results.script}
                           displayName={user.displayName || 'مستخدم'} 
                           photoURL={user.photoURL}
                           caption={results.captions[activePreview]}
+                          hashtags={results.hashtags}
                           niche={niche}
                           platform={previewPlatform}
                           onSave={() => handleSaveFavorite(results.captions[activePreview], 'caption', `preview-${activePreview}`)}
@@ -708,74 +900,36 @@ ${results.script}
                       </div>
                     </div>
                   </motion.div>
-                  {/* Post Ideas */}
-                  <motion.div variants={itemVariants}>
-                    <ResultCard
-                      title="أفكار المنشورات"
-                      type="post"
-                      theme={theme}
-                      icon={<FileText className="w-5 h-5" />}
-                      items={results.postIdeas}
-                      onCopy={(text) => copyToClipboard(text, 'posts')}
-                      onSave={(content, id) => handleSaveFavorite(content, 'post', id)}
-                      onSchedule={(content) => setSchedulingPost({ content, platform: platforms[0] || 'Instagram' })}
-                      onABTest={() => {}}
-                      isCopied={copied === 'posts'}
-                      savingId={saving}
-                      selectingForAB={selectingForAB}
-                      abVariationA={abVariationA}
-                    />
-                  </motion.div>
+                      {/* Captions */}
+                      <motion.div variants={itemVariants}>
+                        <ResultCard
+                          title="التعليقات"
+                          type="caption"
+                          theme={theme}
+                          icon={<Send className="w-5 h-5" />}
+                          items={results.captions}
+                          onCopy={(text: string) => copyToClipboard(text, 'captions')}
+                          onSave={(content: string, id: string) => handleSaveFavorite(content, 'caption', id)}
+                          onSchedule={(content: string) => setSchedulingPost({ content, platform: previewPlatform })}
+                          onABTest={(content: string) => {
+                            if (!abVariationA) {
+                              setAbVariationA(content);
+                            } else {
+                              handleCreateABTest(content);
+                            }
+                          }}
+                          isCopied={copied === 'captions'}
+                          savingId={saving}
+                          selectingForAB={selectingForAB}
+                          abVariationA={abVariationA}
+                        />
+                      </motion.div>
 
-                  {/* Video Ideas */}
-                  <motion.div variants={itemVariants}>
-                    <ResultCard
-                      title="أفكار الفيديوهات"
-                      type="video"
-                      theme={theme}
-                      icon={<Video className="w-5 h-5" />}
-                      items={results.videoIdeas}
-                      onCopy={(text) => copyToClipboard(text, 'videos')}
-                      onSave={(content, id) => handleSaveFavorite(content, 'video', id)}
-                      onSchedule={(content) => setSchedulingPost({ content, platform: platforms[0] || 'TikTok' })}
-                      onABTest={() => {}}
-                      isCopied={copied === 'videos'}
-                      savingId={saving}
-                      selectingForAB={selectingForAB}
-                      abVariationA={abVariationA}
-                    />
-                  </motion.div>
-
-                  {/* Captions */}
-                  <motion.div variants={itemVariants}>
-                    <ResultCard
-                      title="التعليقات"
-                      type="caption"
-                      theme={theme}
-                      icon={<Send className="w-5 h-5" />}
-                      items={results.captions}
-                      onCopy={(text) => copyToClipboard(text, 'captions')}
-                      onSave={(content, id) => handleSaveFavorite(content, 'caption', id)}
-                      onSchedule={(content) => setSchedulingPost({ content, platform: previewPlatform })}
-                      onABTest={(content: string) => {
-                        if (!abVariationA) {
-                          setAbVariationA(content);
-                        } else {
-                          handleCreateABTest(content);
-                        }
-                      }}
-                      isCopied={copied === 'captions'}
-                      savingId={saving}
-                      selectingForAB={selectingForAB}
-                      abVariationA={abVariationA}
-                    />
-                  </motion.div>
-
-                  {/* Hashtags */}
-                  <motion.div 
-                    variants={itemVariants}
-                    className={cn("p-6 border rounded-3xl space-y-4", getSurfaceClasses())}
-                  >
+                      {/* Hashtags */}
+                      <motion.div 
+                        variants={itemVariants}
+                        className={cn("p-6 border rounded-3xl space-y-4", getSurfaceClasses())}
+                      >
                     <div className="flex items-center justify-between">
                       <div className={cn("flex items-center gap-2", getTextClasses())}>
                         <Hash className="w-5 h-5" />
@@ -796,43 +950,21 @@ ${results.script}
                       ))}
                     </div>
                   </motion.div>
-                </div>
-
-                {/* Advanced Features */}
-                <div className="space-y-6">
-                  {results.hook && (
-                    <motion.div 
-                      variants={itemVariants}
-                      className={cn("p-6 border rounded-3xl space-y-3", getSurfaceClasses())}
-                    >
-                      <h3 className={cn("font-bold flex items-center gap-2", getTextClasses())}>
-                        <TrendingUp className={cn("w-5 h-5", getMutedTextClasses())} />
-                        الخطاف (أول 3 ثوانٍ)
-                      </h3>
-                      <p className={cn("italic leading-relaxed", theme === 'light' ? 'text-zinc-600' : 'text-zinc-400')}>"{results.hook}"</p>
                     </motion.div>
                   )}
 
-                  {results.script && (
-                    <motion.div 
-                      variants={itemVariants}
-                      className={cn("p-6 border rounded-3xl space-y-3", getSurfaceClasses())}
+                  {activeTab === 'calendar' && results && results.calendar && (
+                    <motion.div
+                      key="calendar"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                     >
-                      <h3 className={cn("font-bold flex items-center gap-2", getTextClasses())}>
-                        <Video className={cn("w-5 h-5", getMutedTextClasses())} />
-                        سيناريو الفيديو
-                      </h3>
-                      <pre className={cn("text-sm whitespace-pre-wrap font-sans leading-relaxed", theme === 'light' ? 'text-zinc-600' : 'text-zinc-400')}>
-                        {results.script}
-                      </pre>
-                    </motion.div>
-                  )}
-
-                  {results.calendar && (
-                    <motion.div 
-                      variants={itemVariants}
-                      className={cn("p-8 border rounded-3xl space-y-6", getSurfaceClasses())}
-                    >
+                      <motion.div 
+                        variants={itemVariants}
+                        className={cn("p-8 border rounded-3xl space-y-6", getSurfaceClasses())}
+                      >
                       <div className="flex items-center justify-between">
                         <h3 className={cn("text-xl font-bold flex items-center gap-2", getTextClasses())}>
                           <Calendar className={cn("w-5 h-5", getMutedTextClasses())} />
@@ -864,168 +996,226 @@ ${results.script}
                         ))}
                       </div>
                     </motion.div>
+                  </motion.div>
+                )}
+
+                  {activeTab === 'abtest' && (
+                    <motion.div
+                      key="abtest"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="space-y-8"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <h2 className={cn("text-2xl font-black tracking-tighter", getTextClasses())}>اختبارات A/B</h2>
+                          <p className={cn("text-sm font-medium", getMutedTextClasses())}>قارن بين نسختين من المحتوى لمعرفة الأفضل أداءً.</p>
+                        </div>
+                        <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest", theme === 'light' ? 'bg-zinc-100 border-zinc-200 text-zinc-500' : 'bg-zinc-900 border-zinc-800 text-zinc-500')}>
+                          <BarChart2 className="w-3 h-3" />
+                          تحليلات مباشرة
+                        </div>
+                      </div>
+
+                      {abTests.length === 0 ? (
+                        <div className={cn("p-12 border-2 border-dashed rounded-[2.5rem] flex flex-col items-center justify-center text-center space-y-4", theme === 'light' ? 'border-zinc-200 text-zinc-400' : 'border-zinc-800 text-zinc-600')}>
+                          <Split className="w-12 h-12 opacity-20" />
+                          <p className="max-w-xs">لا توجد اختبارات A/B نشطة. اختر تعليقين من النتائج أعلاه لبدء الاختبار.</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {abTests.map((test) => {
+                            const scoreA = test.variationA.likes + test.variationA.comments + test.variationA.shares;
+                            const scoreB = test.variationB.likes + test.variationB.comments + test.variationB.shares;
+                            const totalScore = scoreA + scoreB;
+                            const isWinnerA = test.status === 'completed' && scoreA > scoreB;
+                            const isWinnerB = test.status === 'completed' && scoreB > scoreA;
+                            const isLeadingA = test.status === 'active' && scoreA > scoreB;
+                            const isLeadingB = test.status === 'active' && scoreB > scoreA;
+
+                            return (
+                              <motion.div
+                                key={test.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className={cn(
+                                  "p-6 border rounded-[2.5rem] space-y-6 relative group transition-all duration-500", 
+                                  getSurfaceClasses(),
+                                  (isWinnerA || isWinnerB) && "ring-2 ring-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.1)]"
+                                )}
+                              >
+                                <button 
+                                  onClick={() => handleDeleteABTest(test.id)}
+                                  className="absolute top-4 right-4 p-2 rounded-full hover:bg-red-500/10 text-zinc-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all z-20"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className={cn("text-[10px] font-bold uppercase tracking-widest", getMutedTextClasses())}>{test.niche}</span>
+                                    <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                                    <span className={cn(
+                                      "text-[10px] font-bold uppercase tracking-widest",
+                                      test.status === 'active' ? "text-emerald-500" : "text-zinc-500"
+                                    )}>
+                                      {test.status === 'active' ? 'نشط' : 'مكتمل'}
+                                    </span>
+                                  </div>
+                                  {(isWinnerA || isWinnerB) && (
+                                    <motion.div 
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500 text-white rounded-full text-[10px] font-black tracking-tighter"
+                                    >
+                                      <Trophy className="w-3 h-3" />
+                                      تم تحديد الفائز
+                                    </motion.div>
+                                  )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                  {/* Variation A */}
+                                  <div className={cn(
+                                    "space-y-4 p-4 rounded-2xl border transition-all relative overflow-hidden",
+                                    isWinnerA ? "bg-emerald-500/5 border-emerald-500/30 ring-1 ring-emerald-500/20" : 
+                                    isLeadingA ? "bg-blue-500/5 border-blue-500/20" : "border-transparent"
+                                  )}>
+                                    {isWinnerA && (
+                                      <div className="absolute -top-1 -left-1">
+                                        <div className="bg-emerald-500 text-white p-1.5 rounded-br-xl shadow-lg">
+                                          <Crown className="w-3 h-3" />
+                                        </div>
+                                      </div>
+                                    )}
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-zinc-500">النسخة A</span>
+                                        {isLeadingA && <span className="text-[8px] px-1.5 py-0.5 bg-blue-500/20 text-blue-500 rounded-full font-bold">متصدر</span>}
+                                      </div>
+                                      {test.status === 'active' && (
+                                        <div className="flex gap-2">
+                                          <button onClick={() => handleUpdateABMetric(test.id, 'A', 'likes')} className="p-1 hover:text-emerald-500 transition-colors"><ThumbsUp className="w-3 h-3" /></button>
+                                          <button onClick={() => handleUpdateABMetric(test.id, 'A', 'comments')} className="p-1 hover:text-blue-500 transition-colors"><MessageCircle className="w-3 h-3" /></button>
+                                          <button onClick={() => handleUpdateABMetric(test.id, 'A', 'shares')} className="p-1 hover:text-pink-500 transition-colors"><Share2 className="w-3 h-3" /></button>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className={cn("p-4 rounded-2xl border text-xs leading-relaxed h-24 overflow-y-auto", theme === 'light' ? 'bg-zinc-50 border-zinc-100' : 'bg-zinc-950 border-zinc-800')}>
+                                      {test.variationA.content}
+                                    </div>
+                                    <div className="flex justify-between text-[10px] font-bold">
+                                      <div className="flex items-center gap-1"><ThumbsUp className="w-3 h-3" /> {test.variationA.likes}</div>
+                                      <div className="flex items-center gap-1"><MessageCircle className="w-3 h-3" /> {test.variationA.comments}</div>
+                                      <div className="flex items-center gap-1"><Share2 className="w-3 h-3" /> {test.variationA.shares}</div>
+                                    </div>
+                                  </div>
+
+                                  {/* Variation B */}
+                                  <div className={cn(
+                                    "space-y-4 p-4 rounded-2xl border transition-all relative overflow-hidden",
+                                    isWinnerB ? "bg-emerald-500/5 border-emerald-500/30 ring-1 ring-emerald-500/20" : 
+                                    isLeadingB ? "bg-blue-500/5 border-blue-500/20" : "border-transparent"
+                                  )}>
+                                    {isWinnerB && (
+                                      <div className="absolute -top-1 -left-1">
+                                        <div className="bg-emerald-500 text-white p-1.5 rounded-br-xl shadow-lg">
+                                          <Crown className="w-3 h-3" />
+                                        </div>
+                                      </div>
+                                    )}
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold text-zinc-500">النسخة B</span>
+                                        {isLeadingB && <span className="text-[8px] px-1.5 py-0.5 bg-blue-500/20 text-blue-500 rounded-full font-bold">متصدر</span>}
+                                      </div>
+                                      {test.status === 'active' && (
+                                        <div className="flex gap-2">
+                                          <button onClick={() => handleUpdateABMetric(test.id, 'B', 'likes')} className="p-1 hover:text-emerald-500 transition-colors"><ThumbsUp className="w-3 h-3" /></button>
+                                          <button onClick={() => handleUpdateABMetric(test.id, 'B', 'comments')} className="p-1 hover:text-blue-500 transition-colors"><MessageCircle className="w-3 h-3" /></button>
+                                          <button onClick={() => handleUpdateABMetric(test.id, 'B', 'shares')} className="p-1 hover:text-pink-500 transition-colors"><Share2 className="w-3 h-3" /></button>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className={cn("p-4 rounded-2xl border text-xs leading-relaxed h-24 overflow-y-auto", theme === 'light' ? 'bg-zinc-50 border-zinc-100' : 'bg-zinc-950 border-zinc-800')}>
+                                      {test.variationB.content}
+                                    </div>
+                                    <div className="flex justify-between text-[10px] font-bold">
+                                      <div className="flex items-center gap-1"><ThumbsUp className="w-3 h-3" /> {test.variationB.likes}</div>
+                                      <div className="flex items-center gap-1"><MessageCircle className="w-3 h-3" /> {test.variationB.comments}</div>
+                                      <div className="flex items-center gap-1"><Share2 className="w-3 h-3" /> {test.variationB.shares}</div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Performance Bar */}
+                                <div className="space-y-2">
+                                  <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-zinc-500">
+                                    <span>النسخة A ({totalScore > 0 ? Math.round((scoreA / totalScore) * 100) : 50}%)</span>
+                                    <span>النسخة B ({totalScore > 0 ? Math.round((scoreB / totalScore) * 100) : 50}%)</span>
+                                  </div>
+                                  <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden flex">
+                                    <motion.div 
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${totalScore > 0 ? (scoreA / totalScore) * 100 : 50}%` }}
+                                      className="h-full bg-blue-500"
+                                    />
+                                    <motion.div 
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${totalScore > 0 ? (scoreB / totalScore) * 100 : 50}%` }}
+                                      className="h-full bg-emerald-500"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Winner Indicator & Actions */}
+                                <div className="flex items-center gap-3">
+                                  {test.status === 'active' ? (
+                                    <button
+                                      onClick={() => handleCloseABTest(test.id)}
+                                      className={cn(
+                                        "flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
+                                        theme === 'light' ? "bg-zinc-100 text-zinc-600 hover:bg-zinc-200" : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"
+                                      )}
+                                    >
+                                      إغلاق الاختبار وتحديد الفائز
+                                    </button>
+                                  ) : (
+                                    <div className={cn(
+                                      "flex-1 p-3 rounded-2xl border text-center text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2",
+                                      scoreA > scoreB
+                                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                                        : scoreB > scoreA
+                                          ? "bg-blue-500/10 border-blue-500/20 text-blue-500"
+                                          : "bg-zinc-500/10 border-zinc-500/20 text-zinc-500"
+                                    )}>
+                                      {scoreA > scoreB || scoreB > scoreA ? <Trophy className="w-3 h-3" /> : null}
+                                      {scoreA === scoreB 
+                                        ? 'تعادل في الأداء' 
+                                        : `النسخة ${scoreA > scoreB ? 'A' : 'B'} هي الفائزة`}
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </motion.div>
                   )}
-                </div>
+                </AnimatePresence>
               </motion.div>
             ) : (
               <div className={cn("h-full min-h-[400px] flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-3xl space-y-4", theme === 'light' ? 'border-zinc-200 text-zinc-400' : 'border-zinc-800 text-zinc-600')}>
-                <Sparkles className="w-12 h-12 opacity-20" />
+                <Zap className="w-12 h-12 opacity-20" />
                 <p className="text-center max-w-xs">أدخل مجالك ونوع نشاطك لإنشاء استراتيجية محتوى مخصصة.</p>
               </div>
             )}
           </AnimatePresence>
 
-          {/* A/B Testing Section */}
-          <div className="mt-12 space-y-8">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <h2 className={cn("text-2xl font-black tracking-tighter", getTextClasses())}>اختبارات A/B</h2>
-                <p className={cn("text-sm font-medium", getMutedTextClasses())}>قارن بين نسختين من المحتوى لمعرفة الأفضل أداءً.</p>
-              </div>
-              <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest", theme === 'light' ? 'bg-zinc-100 border-zinc-200 text-zinc-500' : 'bg-zinc-900 border-zinc-800 text-zinc-500')}>
-                <BarChart2 className="w-3 h-3" />
-                تحليلات مباشرة
-              </div>
-            </div>
-
-            {abTests.length === 0 ? (
-              <div className={cn("p-12 border-2 border-dashed rounded-[2.5rem] flex flex-col items-center justify-center text-center space-y-4", theme === 'light' ? 'border-zinc-200 text-zinc-400' : 'border-zinc-800 text-zinc-600')}>
-                <Split className="w-12 h-12 opacity-20" />
-                <p className="max-w-xs">لا توجد اختبارات A/B نشطة. اختر تعليقين من النتائج أعلاه لبدء الاختبار.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {abTests.map((test) => (
-                  <motion.div
-                    key={test.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={cn("p-6 border rounded-[2.5rem] space-y-6 relative group", getSurfaceClasses())}
-                  >
-                    <button 
-                      onClick={() => handleDeleteABTest(test.id)}
-                      className="absolute top-4 right-4 p-2 rounded-full hover:bg-red-500/10 text-zinc-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-
-                    <div className="flex items-center gap-2">
-                      <span className={cn("text-[10px] font-bold uppercase tracking-widest", getMutedTextClasses())}>{test.niche}</span>
-                      <span className="w-1 h-1 rounded-full bg-zinc-700" />
-                      <span className={cn(
-                        "text-[10px] font-bold uppercase tracking-widest",
-                        test.status === 'active' ? "text-emerald-500" : "text-zinc-500"
-                      )}>
-                        {test.status === 'active' ? 'نشط' : 'مكتمل'}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Variation A */}
-                      {(() => {
-                        const scoreA = test.variationA.likes + test.variationA.comments + test.variationA.shares;
-                        const scoreB = test.variationB.likes + test.variationB.comments + test.variationB.shares;
-                        const isWinnerA = test.status === 'completed' && scoreA > scoreB;
-                        
-                        return (
-                          <div className={cn(
-                            "space-y-4 p-4 rounded-2xl border transition-all",
-                            isWinnerA ? "bg-emerald-500/5 border-emerald-500/30 ring-1 ring-emerald-500/20" : "border-transparent"
-                          )}>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-zinc-500">النسخة A</span>
-                                {isWinnerA && <Star className="w-3 h-3 text-emerald-500 fill-emerald-500" />}
-                              </div>
-                              {test.status === 'active' && (
-                                <div className="flex gap-2">
-                                  <button onClick={() => handleUpdateABMetric(test.id, 'A', 'likes')} className="p-1 hover:text-emerald-500 transition-colors"><ThumbsUp className="w-3 h-3" /></button>
-                                  <button onClick={() => handleUpdateABMetric(test.id, 'A', 'comments')} className="p-1 hover:text-blue-500 transition-colors"><MessageCircle className="w-3 h-3" /></button>
-                                  <button onClick={() => handleUpdateABMetric(test.id, 'A', 'shares')} className="p-1 hover:text-pink-500 transition-colors"><Share2 className="w-3 h-3" /></button>
-                                </div>
-                              )}
-                            </div>
-                            <div className={cn("p-4 rounded-2xl border text-xs leading-relaxed h-24 overflow-y-auto", theme === 'light' ? 'bg-zinc-50 border-zinc-100' : 'bg-zinc-950 border-zinc-800')}>
-                              {test.variationA.content}
-                            </div>
-                            <div className="flex justify-between text-[10px] font-bold">
-                              <div className="flex items-center gap-1"><ThumbsUp className="w-3 h-3" /> {test.variationA.likes}</div>
-                              <div className="flex items-center gap-1"><MessageCircle className="w-3 h-3" /> {test.variationA.comments}</div>
-                              <div className="flex items-center gap-1"><Share2 className="w-3 h-3" /> {test.variationA.shares}</div>
-                            </div>
-                          </div>
-                        );
-                      })()}
-
-                      {/* Variation B */}
-                      {(() => {
-                        const scoreA = test.variationA.likes + test.variationA.comments + test.variationA.shares;
-                        const scoreB = test.variationB.likes + test.variationB.comments + test.variationB.shares;
-                        const isWinnerB = test.status === 'completed' && scoreB > scoreA;
-
-                        return (
-                          <div className={cn(
-                            "space-y-4 p-4 rounded-2xl border transition-all",
-                            isWinnerB ? "bg-emerald-500/5 border-emerald-500/30 ring-1 ring-emerald-500/20" : "border-transparent"
-                          )}>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-zinc-500">النسخة B</span>
-                                {isWinnerB && <Star className="w-3 h-3 text-emerald-500 fill-emerald-500" />}
-                              </div>
-                              {test.status === 'active' && (
-                                <div className="flex gap-2">
-                                  <button onClick={() => handleUpdateABMetric(test.id, 'B', 'likes')} className="p-1 hover:text-emerald-500 transition-colors"><ThumbsUp className="w-3 h-3" /></button>
-                                  <button onClick={() => handleUpdateABMetric(test.id, 'B', 'comments')} className="p-1 hover:text-blue-500 transition-colors"><MessageCircle className="w-3 h-3" /></button>
-                                  <button onClick={() => handleUpdateABMetric(test.id, 'B', 'shares')} className="p-1 hover:text-pink-500 transition-colors"><Share2 className="w-3 h-3" /></button>
-                                </div>
-                              )}
-                            </div>
-                            <div className={cn("p-4 rounded-2xl border text-xs leading-relaxed h-24 overflow-y-auto", theme === 'light' ? 'bg-zinc-50 border-zinc-100' : 'bg-zinc-950 border-zinc-800')}>
-                              {test.variationB.content}
-                            </div>
-                            <div className="flex justify-between text-[10px] font-bold">
-                              <div className="flex items-center gap-1"><ThumbsUp className="w-3 h-3" /> {test.variationB.likes}</div>
-                              <div className="flex items-center gap-1"><MessageCircle className="w-3 h-3" /> {test.variationB.comments}</div>
-                              <div className="flex items-center gap-1"><Share2 className="w-3 h-3" /> {test.variationB.shares}</div>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-
-                    {/* Winner Indicator & Actions */}
-                    <div className="flex items-center gap-3">
-                      {test.status === 'active' ? (
-                        <button
-                          onClick={() => handleCloseABTest(test.id)}
-                          className={cn(
-                            "flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
-                            theme === 'light' ? "bg-zinc-100 text-zinc-600 hover:bg-zinc-200" : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"
-                          )}
-                        >
-                          إغلاق الاختبار
-                        </button>
-                      ) : (
-                        <div className={cn(
-                          "flex-1 p-3 rounded-2xl border text-center text-[10px] font-bold uppercase tracking-widest",
-                          (test.variationA.likes + test.variationA.comments + test.variationA.shares > test.variationB.likes + test.variationB.comments + test.variationB.shares)
-                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                            : (test.variationA.likes + test.variationA.comments + test.variationA.shares < test.variationB.likes + test.variationB.comments + test.variationB.shares)
-                              ? "bg-blue-500/10 border-blue-500/20 text-blue-500"
-                              : "bg-zinc-500/10 border-zinc-500/20 text-zinc-500"
-                        )}>
-                          {test.variationA.likes + test.variationA.comments + test.variationA.shares === test.variationB.likes + test.variationB.comments + test.variationB.shares 
-                            ? 'تعادل في الأداء' 
-                            : `النسخة ${(test.variationA.likes + test.variationA.comments + test.variationA.shares > test.variationB.likes + test.variationB.comments + test.variationB.shares) ? 'A' : 'B'} هي الفائزة`}
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* A/B Testing Section Removed from here and moved into tabs */}
 
           {/* Schedule Modal */}
           <AnimatePresence>

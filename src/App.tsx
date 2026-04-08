@@ -12,7 +12,8 @@ import { Schedule } from './components/Schedule';
 import { Sidebar } from './components/Sidebar';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles } from 'lucide-react';
+import { Zap } from 'lucide-react';
+import { cn } from './lib/utils';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
@@ -85,9 +86,9 @@ export default function App() {
           animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          <Sparkles className="w-12 h-12 text-zinc-100" />
+          <Zap className="w-12 h-12 text-zinc-100" />
         </motion.div>
-        <p className="text-zinc-500 font-medium animate-pulse">جاري تشغيل المهندس المعماري...</p>
+        <p className="text-zinc-500 font-medium animate-pulse">جاري تشغيل Vantage AI...</p>
       </div>
     );
   }
@@ -99,16 +100,16 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-zinc-100 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-zinc-950" />
+              <Zap className="w-5 h-5 text-zinc-950" />
             </div>
-            <span className="font-black tracking-tighter text-xl hidden sm:block">المهندس</span>
+            <span className="font-black tracking-tighter text-xl hidden sm:block uppercase">Vantage AI</span>
           </div>
           <Auth user={profile} loading={loading} onProfileUpdate={setProfile} />
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="pt-24 pb-32 px-6 md:pl-32 lg:pl-64 max-w-7xl mx-auto">
+      <main className="pt-24 pb-32 px-6 md:pl-32 lg:pl-64 max-w-7xl mx-auto min-h-[calc(100vh-8rem)]">
         {!profile ? (
           <div className="h-[70vh] flex flex-col items-center justify-center text-center space-y-8">
             <motion.div
@@ -117,16 +118,16 @@ export default function App() {
               className="space-y-4"
             >
               <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-none">
-                مستقبل <br />
-                <span className="text-zinc-500 italic">صناعة المحتوى</span>
-              </h2>
-              <p className="text-zinc-500 text-lg max-w-xl mx-auto">
-                انضم إلى نخبة المبدعين الذين يستخدمون الذكاء الاصطناعي للسيطرة على وسائل التواصل الاجتماعي. 
-                سجل الدخول لبدء بناء إمبراطوريتك.
-              </p>
+              The Future of <br />
+              <span className="text-zinc-500 italic">Content Strategy</span>
+            </h2>
+            <p className="text-zinc-500 text-lg max-w-xl mx-auto">
+              Join the elite creators using Vantage AI to dominate the digital landscape. 
+              Sign in to start building your empire with data-driven precision.
+            </p>
             </motion.div>
             <div className="flex flex-wrap justify-center gap-4">
-              {['أفكار ذكية', 'سيناريوهات فيروسية', 'تقويم تلقائي', 'تحليل الاتجاهات'].map((feature) => (
+              {['Smart Ideas', 'Viral Scripts', 'Auto Calendar', 'Trend Analysis'].map((feature) => (
                 <div key={feature} className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-bold text-zinc-400 uppercase tracking-widest">
                   {feature}
                 </div>
@@ -164,6 +165,22 @@ export default function App() {
           </>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className={cn(
+        "py-12 px-6 md:pl-32 lg:pl-64 border-t relative z-10",
+        profile?.preferences.theme === 'light' ? 'bg-white border-zinc-200 text-zinc-500' : 'bg-zinc-950 border-zinc-900 text-zinc-500'
+      )}>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            <span className="font-bold tracking-tighter uppercase">Vantage AI</span>
+          </div>
+          <p className="text-xs font-medium">
+            Copyright Ahmed Morgan {new Date().getFullYear()} &copy;
+          </p>
+        </div>
+      </footer>
 
       {/* Footer Decoration */}
       <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-zinc-950 to-transparent pointer-events-none z-0" />

@@ -6,6 +6,7 @@ interface SocialPreviewProps {
   displayName: string;
   photoURL?: string | null;
   caption: string;
+  hashtags: string[];
   niche: string;
   platform?: string;
   onSave?: () => void;
@@ -17,6 +18,7 @@ export const SocialPreview: React.FC<SocialPreviewProps> = ({
   displayName, 
   photoURL, 
   caption, 
+  hashtags,
   niche, 
   platform = 'Instagram',
   onSave,
@@ -37,6 +39,79 @@ export const SocialPreview: React.FC<SocialPreviewProps> = ({
       default: return <Instagram className="w-4 h-4 text-zinc-500" />;
     }
   };
+
+  const isTikTok = platform.toLowerCase() === 'tiktok';
+
+  if (isTikTok) {
+    return (
+      <div className="w-full max-w-[320px] mx-auto bg-black border border-zinc-800 rounded-[2.5rem] overflow-hidden shadow-2xl relative aspect-[9/16] flex flex-col">
+        {/* TikTok Video Area */}
+        <div className="flex-1 bg-zinc-900 flex items-center justify-center relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+          <span className="text-zinc-700 font-black text-sm uppercase tracking-[0.2em] z-10 rotate-[-10deg]">فيديو تيك توك</span>
+          
+          {/* Right Side Actions */}
+          <div className="absolute right-3 bottom-24 flex flex-col items-center gap-6 z-20">
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden bg-zinc-800">
+                {photoURL ? <img src={photoURL} alt="" className="w-full h-full object-cover" /> : <User className="w-6 h-6 text-zinc-500 m-3" />}
+              </div>
+              <div className="w-4 h-4 bg-red-500 rounded-full -mt-2 flex items-center justify-center text-white text-[10px] font-bold">+</div>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <Heart className="w-8 h-8 text-white fill-white" />
+              <span className="text-[10px] text-white font-bold">١٢.٥ ألف</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <MessageCircle className="w-8 h-8 text-white fill-white" />
+              <span className="text-[10px] text-white font-bold">٤٥٦</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <Bookmark className="w-8 h-8 text-white fill-white" />
+              <span className="text-[10px] text-white font-bold">٧٨٩</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <Send className="w-8 h-8 text-white fill-white" />
+              <span className="text-[10px] text-white font-bold">١٢٣</span>
+            </div>
+          </div>
+
+          {/* Bottom Info */}
+          <div className="absolute bottom-6 left-4 right-16 z-20 space-y-3">
+            <div className="font-bold text-white text-sm">@{displayName?.replace(/\s+/g, '').toLowerCase() || 'user'}</div>
+            <div className="text-xs text-white/90 leading-relaxed line-clamp-3">
+              {caption}
+              <div className="mt-1 flex flex-wrap gap-1">
+                {hashtags.map((h, i) => (
+                  <span key={i} className="font-bold text-white">#{h.replace('#', '')}</span>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-white">
+              <div className="w-4 h-4 animate-spin">🎵</div>
+              <span className="truncate">الصوت الأصلي - {displayName}</span>
+            </div>
+          </div>
+
+          {/* Top Tabs */}
+          <div className="absolute top-8 left-0 right-0 flex justify-center gap-4 z-20">
+            <span className="text-white/60 text-sm font-bold">متابعة</span>
+            <span className="text-white text-sm font-bold border-b-2 border-white pb-1">لك</span>
+          </div>
+        </div>
+
+        {/* Quick Actions Overlay */}
+        <div className="absolute top-6 left-6 z-30 flex flex-col gap-2">
+          <button onClick={onSave} className="p-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white">
+            {isSaving ? <Check className="w-4 h-4 text-green-400" /> : <Heart className="w-4 h-4" />}
+          </button>
+          <button onClick={onSchedule} className="p-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white">
+            <Clock className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-[320px] mx-auto bg-zinc-950 border border-zinc-800 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
@@ -106,6 +181,11 @@ export const SocialPreview: React.FC<SocialPreviewProps> = ({
             <span className="font-bold mr-2">{displayName}</span>
             {caption}
           </p>
+          <div className="flex flex-wrap gap-1">
+            {hashtags.map((h, i) => (
+              <span key={i} className="text-xs text-blue-400 font-medium">#{h.replace('#', '')}</span>
+            ))}
+          </div>
           <p className="text-[10px] text-zinc-500 uppercase tracking-wider">منذ ٢ ساعة</p>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from '../types';
-import { LayoutDashboard, History, User, Shield, Sparkles, DollarSign, Clock } from 'lucide-react';
+import { LayoutDashboard, History, User, Shield, Zap, DollarSign, Clock } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 import { GoogleAd } from './GoogleAd';
@@ -46,7 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isA
     <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 md:top-1/2 md:-translate-y-1/2 z-50">
       <div className={cn("flex md:flex-col items-center gap-2 p-2 backdrop-blur-xl border rounded-full md:rounded-3xl shadow-2xl transition-colors duration-500", getSidebarClasses())}>
         <div className={cn("hidden md:flex p-3 mb-2", theme === 'light' ? 'text-zinc-950' : 'text-zinc-100')}>
-          <Sparkles className="w-6 h-6" />
+          <Zap className="w-6 h-6" />
         </div>
         {items.map((item) => (
           <motion.button
@@ -55,13 +55,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isA
             whileTap={{ scale: 0.95 }}
             onClick={() => onViewChange(item.id as View)}
             className={cn(
-              "p-4 rounded-full transition-all flex items-center gap-3 group relative",
+              "p-4 rounded-full transition-all flex items-center gap-3 group relative z-10",
               getButtonClasses(currentView === item.id)
             )}
             title={item.label}
           >
             <item.icon className="w-5 h-5" />
             <span className="hidden lg:block font-bold text-sm pr-2">{item.label}</span>
+            {currentView === item.id && (
+              <motion.div 
+                layoutId="active-pill"
+                className={cn(
+                  "absolute inset-0 rounded-full -z-10",
+                  theme === 'light' ? 'bg-zinc-950' : 'bg-zinc-100'
+                )}
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
             {currentView === item.id && (
               <motion.div 
                 layoutId="active-indicator"

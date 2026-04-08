@@ -17,6 +17,7 @@ export const History: React.FC<HistoryProps> = ({ user, theme }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selected, setSelected] = useState<ContentGeneration | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<{ id: string, e: React.MouseEvent } | null>(null);
 
   useEffect(() => {
     const q = query(
@@ -42,12 +43,14 @@ export const History: React.FC<HistoryProps> = ({ user, theme }) => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    const { id, e } = deletingId;
     e.stopPropagation();
-    if (!confirm('هل أنت متأكد أنك تريد حذف هذا السجل؟')) return;
     try {
       await deleteDoc(doc(db, 'generations', id));
       if (selected?.id === id) setSelected(null);
+      setDeletingId(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `generations/${id}`);
     }
@@ -164,7 +167,10 @@ export const History: React.FC<HistoryProps> = ({ user, theme }) => {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={(e) => handleDelete(g.id, e)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeletingId({ id: g.id, e });
+                      }}
                       className={cn(
                         "p-2 rounded-lg transition-all",
                         selected?.id === g.id 
@@ -321,6 +327,59 @@ export const History: React.FC<HistoryProps> = ({ user, theme }) => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deletingId && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeletingId(null)}
+              className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className={cn(
+                "relative w-full max-w-sm p-8 rounded-[2.5rem] border shadow-2xl space-y-6",
+                theme === 'light' ? 'bg-white border-zinc-200' : 'bg-zinc-900 border-zinc-800'
+              )}
+            >
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
+                <Trash2 className="w-8 h-8 text-red-500" />
+              </div>
+              
+              <div className="text-center space-y-2">
+                <h3 className={cn("text-xl font-black tracking-tighter", getTextClasses())}>حذف السجل</h3>
+                <p className={cn("text-sm font-medium", getMutedTextClasses())}>
+                  هل أنت متأكد أنك تريد حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setDeletingId(null)}
+                  className={cn(
+                    "py-3 rounded-2xl font-bold transition-all",
+                    theme === 'light' ? 'bg-zinc-100 text-zinc-950 hover:bg-zinc-200' : 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700'
+                  )}
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="py-3 rounded-2xl font-bold bg-red-500 text-white hover:bg-red-600 transition-all"
+                >
+                  حذف
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
