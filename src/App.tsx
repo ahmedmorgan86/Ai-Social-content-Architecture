@@ -12,7 +12,7 @@ import { Schedule } from './components/Schedule';
 import { Sidebar } from './components/Sidebar';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { motion, AnimatePresence } from 'motion/react';
-import { Zap } from 'lucide-react';
+import { Zap, Sparkles } from 'lucide-react';
 import { cn } from './lib/utils';
 
 export default function App() {
@@ -56,79 +56,85 @@ export default function App() {
   };
 
   const getThemeClasses = () => {
-    const theme = profile?.preferences.theme || 'dark';
-    switch (theme) {
-      case 'light': return 'bg-zinc-50 text-zinc-950';
-      case 'emerald': return 'bg-emerald-950 text-emerald-50';
-      case 'rose': return 'bg-rose-950 text-rose-50';
-      case 'amber': return 'bg-amber-950 text-amber-50';
-      case 'blue': return 'bg-blue-950 text-blue-50';
-      default: return 'bg-zinc-950 text-zinc-100';
-    }
-  };
-
-  const getHeaderClasses = () => {
-    const theme = profile?.preferences.theme || 'dark';
-    switch (theme) {
-      case 'light': return 'bg-white/50 border-zinc-200';
-      case 'emerald': return 'bg-emerald-950/50 border-emerald-900';
-      case 'rose': return 'bg-rose-950/50 border-rose-900';
-      case 'amber': return 'bg-amber-950/50 border-amber-900';
-      case 'blue': return 'bg-blue-950/50 border-blue-900';
-      default: return 'bg-zinc-950/50 border-zinc-900';
-    }
+    return 'bg-surface text-on-surface';
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center space-y-4">
+      <div className="min-h-screen bg-surface flex flex-col items-center justify-center space-y-6">
         <motion.div
-          animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
-          transition={{ duration: 2, repeat: Infinity }}
+          animate={{ 
+            scale: [1, 1.1, 1],
+            opacity: [0.5, 1, 0.5]
+          }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="relative"
         >
-          <Zap className="w-12 h-12 text-zinc-100" />
+          <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150"></div>
+          <Zap className="w-16 h-16 text-primary relative z-10" />
         </motion.div>
-        <p className="text-zinc-500 font-medium animate-pulse">جاري تشغيل Vantage AI...</p>
+        <div className="space-y-2 text-center">
+          <h2 className="text-xl font-headline font-black tracking-tighter text-on-surface uppercase">محتوى AI</h2>
+          <p className="text-on-surface-variant font-medium text-sm animate-pulse">جاري تشغيل محرك الذكاء الاصطناعي...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${getThemeClasses()}`}>
+    <div className={`min-h-screen transition-colors duration-500 font-body relative overflow-hidden ${getThemeClasses()}`}>
+      {/* Background Orbs (Liquid Design) */}
+      <div className="liquid-blur bg-primary/10 w-[600px] h-[600px] -top-48 -left-48"></div>
+      <div className="liquid-blur bg-secondary-container/10 w-[500px] h-[500px] top-1/2 -right-32"></div>
+      <div className="liquid-blur bg-tertiary-container/10 w-[400px] h-[400px] bottom-10 left-1/4"></div>
+
       {/* Header */}
-      <header className={`fixed top-0 left-0 right-0 z-40 backdrop-blur-xl border-b px-6 py-4 ${getHeaderClasses()}`}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-zinc-100 rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-zinc-950" />
+      <nav className="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-2xl border-b border-outline-variant/10">
+        <div className="lg:pr-72 transition-all duration-500">
+          <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20 group cursor-pointer hover:scale-105 transition-all">
+                <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+              </div>
+              <div className="flex flex-col -space-y-1">
+                <span className="font-headline font-black text-2xl tracking-tighter text-on-surface">محتوى AI</span>
+                <span className="text-[10px] font-label font-bold uppercase tracking-[0.3em] text-primary">Intelligence</span>
+              </div>
             </div>
-            <span className="font-black tracking-tighter text-xl hidden sm:block uppercase">Vantage AI</span>
+            
+            <div className="flex items-center gap-4">
+              <div className="hidden md:flex flex-col items-end -space-y-1">
+                <span className="text-xs font-label font-bold text-on-surface-variant uppercase tracking-widest">مرحباً بك</span>
+                <span className="text-sm font-headline font-bold text-on-surface">{profile?.displayName || 'ضيف'}</span>
+              </div>
+              <Auth user={profile} loading={loading} onProfileUpdate={setProfile} />
+            </div>
           </div>
-          <Auth user={profile} loading={loading} onProfileUpdate={setProfile} />
         </div>
-      </header>
+      </nav>
 
       {/* Main Content */}
-      <main className="pt-24 pb-32 px-6 md:pl-32 lg:pl-64 max-w-7xl mx-auto min-h-[calc(100vh-8rem)]">
-        {!profile ? (
+      <main className="pt-24 pb-32 lg:pr-72 min-h-screen relative z-10 transition-all duration-500">
+        <div className="px-4 max-w-7xl mx-auto">
+          {!profile ? (
           <div className="h-[70vh] flex flex-col items-center justify-center text-center space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
-              <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-none">
-              The Future of <br />
-              <span className="text-zinc-500 italic">Content Strategy</span>
+              <h2 className="text-5xl md:text-7xl font-headline font-black tracking-tighter leading-none text-on-surface">
+              مستقبل <br />
+              <span className="text-primary italic">استراتيجية المحتوى</span>
             </h2>
-            <p className="text-zinc-500 text-lg max-w-xl mx-auto">
-              Join the elite creators using Vantage AI to dominate the digital landscape. 
-              Sign in to start building your empire with data-driven precision.
+            <p className="text-on-surface-variant text-lg max-w-xl mx-auto font-body">
+              انضم إلى نخبة المبدعين الذين يستخدمون محتوى AI للسيطرة على المشهد الرقمي.
+              سجل دخولك الآن للبدء في بناء إمبراطوريتك بدقة مدعومة بالبيانات.
             </p>
             </motion.div>
             <div className="flex flex-wrap justify-center gap-4">
-              {['Smart Ideas', 'Viral Scripts', 'Auto Calendar', 'Trend Analysis'].map((feature) => (
-                <div key={feature} className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-bold text-zinc-400 uppercase tracking-widest">
+              {['أفكار ذكية', 'سيناريوهات فيروسية', 'تقويم تلقائي', 'تحليل التوجهات'].map((feature) => (
+                <div key={feature} className="px-6 py-3 bg-surface-container-low border border-outline-variant/20 rounded-full text-xs font-bold text-on-surface-variant uppercase tracking-widest font-label">
                   {feature}
                 </div>
               ))}
@@ -140,7 +146,6 @@ export default function App() {
               currentView={currentView} 
               onViewChange={setCurrentView} 
               isAdmin={profile.role === 'admin'} 
-              theme={profile.preferences.theme || 'dark'}
             />
             <AnimatePresence mode="wait">
               <motion.div
@@ -152,38 +157,51 @@ export default function App() {
                   duration: 0.3,
                   ease: [0.23, 1, 0.32, 1]
                 }}
+                className="w-full"
               >
-                <ErrorBoundary theme={profile.preferences.theme || 'dark'}>
-                  {currentView === 'dashboard' && <Dashboard user={profile} theme={profile.preferences.theme || 'dark'} />}
-                  {currentView === 'history' && <History user={profile} theme={profile.preferences.theme || 'dark'} />}
-                  {currentView === 'schedule' && <Schedule user={profile} theme={profile.preferences.theme || 'dark'} />}
+                <ErrorBoundary>
+                  {currentView === 'dashboard' && <Dashboard user={profile} />}
+                  {currentView === 'history' && <History user={profile} />}
+                  {currentView === 'schedule' && <Schedule user={profile} />}
                   {currentView === 'profile' && <Profile user={profile} onUpdate={handleProfileUpdate} />}
-                  {currentView === 'admin' && profile.role === 'admin' && <Admin user={profile} theme={profile.preferences.theme || 'dark'} />}
+                  {currentView === 'admin' && profile.role === 'admin' && <Admin user={profile} />}
                 </ErrorBoundary>
               </motion.div>
             </AnimatePresence>
           </>
         )}
+        </div>
       </main>
 
       {/* Footer */}
-      <footer className={cn(
-        "py-12 px-6 md:pl-32 lg:pl-64 border-t relative z-10",
-        profile?.preferences.theme === 'light' ? 'bg-white border-zinc-200 text-zinc-500' : 'bg-zinc-950 border-zinc-900 text-zinc-500'
-      )}>
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4" />
-            <span className="font-bold tracking-tighter uppercase">Vantage AI</span>
+      <footer className="py-16 border-t border-outline-variant/10 relative z-10 bg-surface-container-lowest">
+        <div className="lg:pr-72 transition-all duration-500">
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 items-center">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <span className="font-headline font-black text-xl tracking-tighter text-on-surface">محتوى AI</span>
+              </div>
+              <p className="text-sm text-on-surface-variant font-medium leading-relaxed">
+                المنصة المتكاملة لصناعة المحتوى الرقمي باستخدام أحدث تقنيات الذكاء الاصطناعي.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <p className="text-sm text-on-surface font-bold">Ahmed Morgan {new Date().getFullYear()} &copy;</p>
+              <p className="text-[10px] text-outline-variant font-label font-bold uppercase tracking-widest mt-1">جميع الحقوق محفوظة</p>
+            </div>
+
+            <div className="flex justify-end gap-8">
+              <a href="#" className="text-xs font-label font-bold text-outline-variant hover:text-primary transition-colors uppercase tracking-widest">الخصوصية</a>
+              <a href="#" className="text-xs font-label font-bold text-outline-variant hover:text-primary transition-colors uppercase tracking-widest">الشروط</a>
+              <a href="#" className="text-xs font-label font-bold text-outline-variant hover:text-primary transition-colors uppercase tracking-widest">تواصل معنا</a>
+            </div>
           </div>
-          <p className="text-xs font-medium">
-            Copyright Ahmed Morgan {new Date().getFullYear()} &copy;
-          </p>
         </div>
       </footer>
-
-      {/* Footer Decoration */}
-      <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-zinc-950 to-transparent pointer-events-none z-0" />
     </div>
   );
 }

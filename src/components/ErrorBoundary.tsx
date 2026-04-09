@@ -4,7 +4,6 @@ import { cn } from '../lib/utils';
 
 interface Props {
   children: ReactNode;
-  theme?: string;
 }
 
 interface State {
@@ -53,10 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className={cn(
-          "min-h-[400px] flex flex-col items-center justify-center p-8 text-center space-y-6 rounded-[2.5rem] border",
-          this.props.theme === 'light' ? 'bg-white border-zinc-200' : 'bg-zinc-950 border-zinc-800'
-        )}>
+        <div className="min-h-[400px] flex flex-col items-center justify-center p-8 text-center space-y-6 rounded-[2.5rem] border bg-surface-container-lowest border-outline-variant/10">
           <div className={cn(
             "p-4 rounded-full",
             isFirestoreError ? "bg-amber-500/10 text-amber-500" : "bg-red-500/10 text-red-500"
@@ -65,20 +61,17 @@ export class ErrorBoundary extends Component<Props, State> {
           </div>
           
           <div className="space-y-2">
-            <h2 className={cn("text-2xl font-black tracking-tighter", this.props.theme === 'light' ? 'text-zinc-950' : 'text-zinc-100')}>
+            <h2 className="text-2xl font-black tracking-tighter text-on-surface">
               {isFirestoreError ? 'خطأ في الصلاحيات' : 'عذراً، حدث خطأ ما'}
             </h2>
-            <p className={cn("text-sm font-medium max-w-md mx-auto", this.props.theme === 'light' ? 'text-zinc-500' : 'text-zinc-400')}>
+            <p className="text-sm font-medium max-w-md mx-auto text-on-surface-variant">
               {errorMessage}
             </p>
           </div>
 
           <button
             onClick={this.handleReset}
-            className={cn(
-              "flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all",
-              this.props.theme === 'light' ? 'bg-zinc-950 text-white hover:bg-zinc-800' : 'bg-zinc-100 text-zinc-950 hover:bg-zinc-200'
-            )}
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all bg-primary text-white hover:bg-primary-dim shadow-lg shadow-primary/20"
           >
             <RefreshCcw className="w-4 h-4" />
             إعادة المحاولة

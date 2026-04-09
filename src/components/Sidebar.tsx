@@ -9,86 +9,101 @@ interface SidebarProps {
   currentView: View;
   onViewChange: (view: View) => void;
   isAdmin: boolean;
-  theme: string;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isAdmin, theme }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isAdmin }) => {
   const items = [
-    { id: 'dashboard', label: 'الرئيسية', icon: LayoutDashboard },
-    { id: 'history', label: 'السجل', icon: History },
-    { id: 'schedule', label: 'المجدولة', icon: Clock },
-    { id: 'profile', label: 'الإعدادات', icon: User },
+    { id: 'dashboard', label: 'الرئيسية', icon: 'explore' },
+    { id: 'history', label: 'السجل', icon: 'bubble_chart' },
+    { id: 'schedule', label: 'المجدولة', icon: 'add_circle' },
+    { id: 'profile', label: 'الإعدادات', icon: 'person' },
   ];
 
   if (isAdmin) {
-    items.push({ id: 'admin', label: 'الإدارة', icon: Shield });
+    items.push({ id: 'admin', label: 'الإدارة', icon: 'auto_awesome' });
   }
 
-  const getSidebarClasses = () => {
-    switch (theme) {
-      case 'light': return 'bg-white/80 border-zinc-200';
-      case 'emerald': return 'bg-emerald-900/80 border-emerald-800';
-      case 'rose': return 'bg-rose-900/80 border-rose-800';
-      case 'amber': return 'bg-amber-900/80 border-amber-800';
-      case 'blue': return 'bg-blue-900/80 border-blue-800';
-      default: return 'bg-zinc-900/80 border-zinc-800';
-    }
-  };
-
-  const getButtonClasses = (active: boolean) => {
-    if (active) {
-      return theme === 'light' ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-950';
-    }
-    return theme === 'light' ? 'text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100' : 'text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800';
-  };
-
   return (
-    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 md:left-6 md:translate-x-0 md:top-1/2 md:-translate-y-1/2 z-50">
-      <div className={cn("flex md:flex-col items-center gap-2 p-2 backdrop-blur-xl border rounded-full md:rounded-3xl shadow-2xl transition-colors duration-500", getSidebarClasses())}>
-        <div className={cn("hidden md:flex p-3 mb-2", theme === 'light' ? 'text-zinc-950' : 'text-zinc-100')}>
-          <Zap className="w-6 h-6" />
+    <>
+      {/* Desktop Sidebar */}
+      <nav className="hidden lg:flex fixed right-8 top-1/2 -translate-y-1/2 flex-col gap-4 z-50">
+        <div className="backdrop-blur-3xl bg-surface-container-low/80 border border-outline-variant/10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] rounded-[3rem] p-3 flex flex-col gap-2 transition-all duration-500">
+          {items.map((item) => (
+            <motion.button
+              key={item.id}
+              whileHover={{ scale: 1.05, x: -5 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onViewChange(item.id as View)}
+              className={cn(
+                "flex items-center gap-4 py-4 px-6 rounded-[2rem] transition-all relative group min-w-[180px]",
+                currentView === item.id 
+                  ? "text-primary"
+                  : "text-on-surface-variant hover:text-on-surface"
+              )}
+            >
+              <span 
+                className="material-symbols-outlined text-[26px] transition-transform group-hover:scale-110" 
+                style={{ fontVariationSettings: `'FILL' ${currentView === item.id ? 1 : 0}, 'wght' 500` }}
+              >
+                {item.icon}
+              </span>
+              <span className={cn(
+                "text-sm font-headline font-bold tracking-tight transition-all",
+                currentView === item.id ? "opacity-100" : "opacity-70 group-hover:opacity-100"
+              )}>
+                {item.label}
+              </span>
+              {currentView === item.id && (
+                <motion.div 
+                  layoutId="active-nav-pill-desktop"
+                  className="absolute inset-0 bg-primary/10 rounded-[2rem] -z-10"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+            </motion.button>
+          ))}
         </div>
-        {items.map((item) => (
-          <motion.button
-            key={item.id}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => onViewChange(item.id as View)}
-            className={cn(
-              "p-4 rounded-full transition-all flex items-center gap-3 group relative z-10",
-              getButtonClasses(currentView === item.id)
-            )}
-            title={item.label}
-          >
-            <item.icon className="w-5 h-5" />
-            <span className="hidden lg:block font-bold text-sm pr-2">{item.label}</span>
-            {currentView === item.id && (
-              <motion.div 
-                layoutId="active-pill"
-                className={cn(
-                  "absolute inset-0 rounded-full -z-10",
-                  theme === 'light' ? 'bg-zinc-950' : 'bg-zinc-100'
-                )}
-                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-              />
-            )}
-            {currentView === item.id && (
-              <motion.div 
-                layoutId="active-indicator"
-                className={cn("absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full hidden md:block", theme === 'light' ? 'bg-zinc-950' : 'bg-zinc-100')}
-              />
-            )}
-          </motion.button>
-        ))}
+      </nav>
 
-        {/* Sidebar Mini Ad */}
-        <div className="hidden md:flex mt-4 p-2 w-full flex-col items-center gap-2">
-          <div className="text-[8px] text-zinc-700 font-bold uppercase">Ad</div>
-          <div className="w-10 h-10 bg-zinc-800/50 rounded-xl flex items-center justify-center overflow-hidden">
-            <DollarSign className="w-4 h-4 text-zinc-700" />
-          </div>
+      {/* Mobile Bottom Bar */}
+      <nav className="lg:hidden fixed bottom-8 w-full z-50 flex justify-center items-center px-6 left-0 pointer-events-none">
+        <div className="pointer-events-auto backdrop-blur-3xl bg-surface-container-low/80 border border-outline-variant/10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] w-full max-w-lg rounded-[2.5rem] flex justify-around items-center p-2 transition-all duration-500">
+          {items.map((item) => (
+            <motion.button
+              key={item.id}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onViewChange(item.id as View)}
+              className={cn(
+                "flex flex-col items-center justify-center py-3 px-4 rounded-[2rem] transition-all relative group flex-1",
+                currentView === item.id 
+                  ? "text-primary"
+                  : "text-on-surface-variant hover:text-on-surface"
+              )}
+            >
+              <span 
+                className="material-symbols-outlined text-[24px] transition-transform group-hover:-translate-y-0.5" 
+                style={{ fontVariationSettings: `'FILL' ${currentView === item.id ? 1 : 0}, 'wght' 500` }}
+              >
+                {item.icon}
+              </span>
+              <span className={cn(
+                "text-[9px] font-label font-bold uppercase tracking-widest mt-1 transition-all",
+                currentView === item.id ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"
+              )}>
+                {item.label}
+              </span>
+              {currentView === item.id && (
+                <motion.div 
+                  layoutId="active-nav-pill-mobile"
+                  className="absolute inset-0 bg-primary/10 rounded-[2rem] -z-10"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+            </motion.button>
+          ))}
         </div>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 };

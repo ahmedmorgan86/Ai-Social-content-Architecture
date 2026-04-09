@@ -5,7 +5,6 @@ export interface UserProfile {
   photoURL: string | null;
   role: 'admin' | 'user';
   preferences: {
-    theme: 'light' | 'dark' | 'emerald' | 'rose' | 'amber' | 'blue';
     niche?: string;
   };
   createdAt: any;
@@ -27,6 +26,7 @@ export interface ContentResults {
   script?: string;
   hook?: string;
   calendar?: CalendarDay[];
+  bestTimes?: { platform: string; time: string }[];
 }
 
 export interface ContentGeneration {

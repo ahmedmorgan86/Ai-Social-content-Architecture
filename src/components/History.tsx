@@ -8,10 +8,9 @@ import { cn } from '../lib/utils';
 
 interface HistoryProps {
   user: UserProfile;
-  theme: string;
 }
 
-export const History: React.FC<HistoryProps> = ({ user, theme }) => {
+export const History: React.FC<HistoryProps> = ({ user }) => {
   const [generations, setGenerations] = useState<ContentGeneration[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,52 +75,26 @@ export const History: React.FC<HistoryProps> = ({ user, theme }) => {
     show: { opacity: 1, x: 0 }
   };
 
-  const getSurfaceClasses = () => {
-    switch (theme) {
-      case 'light': return 'bg-white/50 border-zinc-200';
-      case 'emerald': return 'bg-emerald-900/50 border-emerald-800';
-      case 'rose': return 'bg-rose-900/50 border-rose-800';
-      case 'amber': return 'bg-amber-900/50 border-amber-800';
-      case 'blue': return 'bg-blue-900/50 border-blue-800';
-      default: return 'bg-zinc-900/50 border-zinc-800';
-    }
-  };
-
-  const getTextClasses = () => {
-    return theme === 'light' ? 'text-zinc-950' : 'text-zinc-100';
-  };
-
-  const getMutedTextClasses = () => {
-    switch (theme) {
-      case 'light': return 'text-zinc-500';
-      case 'emerald': return 'text-emerald-400/60';
-      case 'rose': return 'text-rose-400/60';
-      case 'amber': return 'text-amber-400/60';
-      case 'blue': return 'text-blue-400/60';
-      default: return 'text-zinc-500';
-    }
-  };
-
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="max-w-6xl mx-auto space-y-12 font-body">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
-          <h1 className={cn("text-3xl font-bold", getTextClasses())}>السجل</h1>
-          <p className={getMutedTextClasses()}>استراتيجيات المحتوى والأفكار السابقة الخاصة بك.</p>
+          <h1 className="text-4xl font-headline font-black text-on-surface tracking-tighter">السجل</h1>
+          <p className="text-on-surface-variant font-medium">استراتيجيات المحتوى والأفكار السابقة الخاصة بك.</p>
         </div>
-        <div className="relative">
-          <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", getMutedTextClasses())} />
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-outline-variant" />
           <input
             type="text"
             placeholder="البحث في المجالات..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className={cn("pl-10 pr-4 py-2 border rounded-xl outline-none w-full md:w-64 transition-all", theme === 'light' ? 'bg-zinc-100 border-zinc-200 text-zinc-950 focus:ring-zinc-300' : 'bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-zinc-700')}
+            className="w-full pl-12 pr-6 py-3 bg-surface-container-low border border-outline-variant/20 rounded-full text-on-surface outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
           />
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         {/* List */}
         <motion.div 
           variants={containerVariants}
@@ -131,8 +104,8 @@ export const History: React.FC<HistoryProps> = ({ user, theme }) => {
         >
           {loading ? (
             <div className="space-y-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className={cn("h-24 rounded-2xl animate-pulse", theme === 'light' ? 'bg-zinc-200' : 'bg-zinc-900/50')} />
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-24 rounded-2xl animate-pulse bg-surface-container-low border border-outline-variant/10" />
               ))}
             </div>
           ) : filtered.length > 0 ? (
@@ -143,23 +116,26 @@ export const History: React.FC<HistoryProps> = ({ user, theme }) => {
                 variants={itemVariants}
                 onClick={() => setSelected(g)}
                 className={cn(
-                  "p-4 rounded-2xl cursor-pointer transition-all group border",
+                  "p-5 rounded-2xl cursor-pointer transition-all group border relative overflow-hidden",
                   selected?.id === g.id 
-                    ? (theme === 'light' ? "bg-zinc-950 border-zinc-950" : "bg-zinc-100 border-zinc-100") 
-                    : (theme === 'light' ? "bg-white border-zinc-200 hover:border-zinc-300" : "bg-zinc-900/50 border-zinc-800 hover:border-zinc-700")
+                    ? "bg-primary border-primary shadow-lg" 
+                    : "bg-surface-container-lowest border-outline-variant/10 hover:border-primary/30 hover:bg-surface-container-low"
                 )}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between relative z-10">
                   <div className="space-y-1">
-                    <h3 className={cn("font-bold", selected?.id === g.id ? (theme === 'light' ? "text-zinc-100" : "text-zinc-950") : getTextClasses())}>
+                    <h3 className={cn(
+                      "font-headline font-bold text-lg",
+                      selected?.id === g.id ? "text-white" : "text-on-surface"
+                    )}>
                       {g.niche}
                     </h3>
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className={cn("uppercase font-semibold", selected?.id === g.id ? (theme === 'light' ? "text-zinc-400" : "text-zinc-600") : getMutedTextClasses())}>
+                    <div className="flex items-center gap-3 text-[10px] font-label font-bold uppercase tracking-widest">
+                      <span className={selected?.id === g.id ? "text-white/80" : "text-primary"}>
                         {g.activityType}
                       </span>
-                      <span className={cn(selected?.id === g.id ? (theme === 'light' ? "text-zinc-700" : "text-zinc-300") : "text-zinc-700")}>•</span>
-                      <span className={cn("flex items-center gap-1", selected?.id === g.id ? (theme === 'light' ? "text-zinc-500" : "text-zinc-500") : getMutedTextClasses())}>
+                      <span className={selected?.id === g.id ? "text-white/40" : "text-outline-variant"}>•</span>
+                      <span className={cn("flex items-center gap-1", selected?.id === g.id ? "text-white/60" : "text-on-surface-variant")}>
                         <Clock className="w-3 h-3" />
                         {g.createdAt?.toDate().toLocaleDateString()}
                       </span>
@@ -172,15 +148,15 @@ export const History: React.FC<HistoryProps> = ({ user, theme }) => {
                         setDeletingId({ id: g.id, e });
                       }}
                       className={cn(
-                        "p-2 rounded-lg transition-all",
+                        "p-2 rounded-full transition-all",
                         selected?.id === g.id 
-                          ? (theme === 'light' ? "hover:bg-zinc-900 text-zinc-500 hover:text-red-400" : "hover:bg-zinc-200 text-zinc-500 hover:text-red-500") 
-                          : "hover:bg-zinc-800 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100"
+                          ? "hover:bg-white/10 text-white/50 hover:text-white" 
+                          : "hover:bg-red-50 text-outline-variant hover:text-red-500 opacity-0 group-hover:opacity-100"
                       )}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
-                    <ChevronRight className={cn("w-5 h-5", selected?.id === g.id ? (theme === 'light' ? "text-zinc-700" : "text-zinc-400") : "text-zinc-700")} />
+                    <ChevronRight className={cn("w-5 h-5 transition-transform", selected?.id === g.id ? "text-white rotate-90" : "text-outline-variant")} />
                   </div>
                 </div>
               </motion.div>
@@ -188,9 +164,10 @@ export const History: React.FC<HistoryProps> = ({ user, theme }) => {
           ) : (
             <motion.div 
               variants={itemVariants}
-              className={cn("p-12 border-2 border-dashed rounded-3xl text-center", theme === 'light' ? 'border-zinc-200 text-zinc-400' : 'border-zinc-800 text-zinc-600')}
+              className="p-16 border-2 border-dashed border-outline-variant/20 rounded-3xl text-center space-y-4"
             >
-              لم يتم العثور على سجل.
+              <Search className="w-12 h-12 mx-auto text-outline-variant opacity-20" />
+              <p className="text-on-surface-variant font-medium">لم يتم العثور على سجل.</p>
             </motion.div>
           )}
         </motion.div>
@@ -201,117 +178,118 @@ export const History: React.FC<HistoryProps> = ({ user, theme }) => {
             {selected ? (
               <motion.div
                 key={selected.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className={cn("p-8 border rounded-3xl space-y-8", getSurfaceClasses())}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-surface-container-lowest border border-outline-variant/10 rounded-3xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] space-y-10"
               >
-                <div className={cn("flex items-center justify-between border-b pb-6", theme === 'light' ? 'border-zinc-200' : 'border-zinc-800')}>
-                  <div className="space-y-1">
-                    <h2 className={cn("text-2xl font-bold", getTextClasses())}>{selected.niche}</h2>
-                    <div className="flex items-center gap-3">
-                      <p className={cn("uppercase text-xs font-bold tracking-widest", getMutedTextClasses())}>{selected.activityType}</p>
+                <div className="flex items-center justify-between border-b border-outline-variant/10 pb-8">
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-headline font-black text-on-surface tracking-tighter">{selected.niche}</h2>
+                    <div className="flex items-center gap-3 text-[10px] font-label font-bold uppercase tracking-widest text-on-surface-variant">
+                      <span>{selected.activityType}</span>
                       {selected.tone && (
                         <>
-                          <span className={cn(theme === 'light' ? "text-zinc-300" : "text-zinc-700")}>•</span>
-                          <p className={cn("text-xs font-bold", getMutedTextClasses())}>{selected.tone}</p>
+                          <span className="text-outline-variant">•</span>
+                          <span>{selected.tone}</span>
                         </>
                       )}
                       {selected.duration && (
                         <>
-                          <span className={cn(theme === 'light' ? "text-zinc-300" : "text-zinc-700")}>•</span>
-                          <p className={cn("text-xs font-bold", getMutedTextClasses())}>{selected.duration} يوم</p>
+                          <span className="text-outline-variant">•</span>
+                          <span>{selected.duration} يوم</span>
                         </>
                       )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className={cn("text-3xl font-black", getTextClasses())}>{selected.results.score}</div>
-                    <div className={cn("text-xs font-bold uppercase tracking-tighter", getMutedTextClasses())}>الدرجة</div>
+                    <div className="text-4xl font-headline font-black text-primary tracking-tighter">{selected.results.score}</div>
+                    <div className="text-[10px] font-label font-bold uppercase tracking-widest text-outline-variant">الدرجة</div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <h4 className={cn("font-bold flex items-center gap-2", getTextClasses())}>
-                        <FileText className={cn("w-4 h-4", getMutedTextClasses())} />
+                      <h4 className="font-headline font-bold text-lg text-on-surface flex items-center gap-3">
+                        <FileText className="w-5 h-5 text-primary" />
                         أفكار المنشورات
                       </h4>
                       <button 
                         onClick={() => copyToClipboard(selected.results.postIdeas.join('\n'), 'posts')}
-                        className={cn("p-1.5 rounded-md transition-colors", theme === 'light' ? 'hover:bg-zinc-100' : 'hover:bg-zinc-800')}
+                        className="p-2 rounded-full hover:bg-surface-container-low transition-all text-on-surface-variant"
                       >
-                        {copiedId === 'posts' ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className={cn("w-3.5 h-3.5", getMutedTextClasses())} />}
+                        {copiedId === 'posts' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
-                    <ul className="space-y-2">
+                    <ul className="space-y-3">
                       {selected.results.postIdeas.map((item, i) => (
-                        <li key={i} className={cn("text-sm leading-relaxed", theme === 'light' ? 'text-zinc-600' : 'text-zinc-400')}>• {item}</li>
+                        <li key={i} className="text-sm leading-relaxed text-on-surface-variant flex gap-3">
+                          <span className="text-primary font-black">0{i + 1}</span>
+                          {item}
+                        </li>
                       ))}
                     </ul>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <h4 className={cn("font-bold flex items-center gap-2", getTextClasses())}>
-                        <Video className={cn("w-4 h-4", getMutedTextClasses())} />
+                      <h4 className="font-headline font-bold text-lg text-on-surface flex items-center gap-3">
+                        <Video className="w-5 h-5 text-primary" />
                         أفكار الفيديوهات
                       </h4>
                       <button 
                         onClick={() => copyToClipboard(selected.results.videoIdeas.join('\n'), 'videos')}
-                        className={cn("p-1.5 rounded-md transition-colors", theme === 'light' ? 'hover:bg-zinc-100' : 'hover:bg-zinc-800')}
+                        className="p-2 rounded-full hover:bg-surface-container-low transition-all text-on-surface-variant"
                       >
-                        {copiedId === 'videos' ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className={cn("w-3.5 h-3.5", getMutedTextClasses())} />}
+                        {copiedId === 'videos' ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                       </button>
                     </div>
-                    <ul className="space-y-2">
+                    <ul className="space-y-3">
                       {selected.results.videoIdeas.map((item, i) => (
-                        <li key={i} className={cn("text-sm leading-relaxed", theme === 'light' ? 'text-zinc-600' : 'text-zinc-400')}>• {item}</li>
+                        <li key={i} className="text-sm leading-relaxed text-on-surface-variant flex gap-3">
+                          <span className="text-primary font-black">0{i + 1}</span>
+                          {item}
+                        </li>
                       ))}
                     </ul>
                   </div>
                 </div>
 
                 {selected.results.hook && (
-                  <div className={cn("p-4 border rounded-2xl space-y-2", theme === 'light' ? 'bg-zinc-50 border-zinc-200' : 'bg-zinc-950 border-zinc-800')}>
-                    <h4 className={cn("font-bold text-sm flex items-center gap-2", getTextClasses())}>
-                      <TrendingUp className={cn("w-4 h-4", getMutedTextClasses())} />
-                      الخطاف
+                  <div className="p-6 bg-surface-container-low border border-outline-variant/10 rounded-2xl space-y-3">
+                    <h4 className="font-headline font-bold text-sm text-on-surface flex items-center gap-3">
+                      <TrendingUp className="w-4 h-4 text-primary" />
+                      الخطاف (Hook)
                     </h4>
-                    <p className={cn("text-sm italic", theme === 'light' ? 'text-zinc-600' : 'text-zinc-400')}>"{selected.results.hook}"</p>
+                    <p className="text-sm text-on-surface-variant leading-relaxed italic">"{selected.results.hook}"</p>
                   </div>
                 )}
 
                 {selected.results.calendar && Array.isArray(selected.results.calendar) && (
-                  <div className={cn("space-y-4 border-t pt-6", theme === 'light' ? 'border-zinc-200' : 'border-zinc-800')}>
-                    <h4 className={cn("font-bold flex items-center gap-2", getTextClasses())}>
-                      <Calendar className={cn("w-4 h-4", getMutedTextClasses())} />
+                  <div className="space-y-6 pt-8 border-t border-outline-variant/10">
+                    <h4 className="font-headline font-bold text-lg text-on-surface flex items-center gap-3">
+                      <Calendar className="w-5 h-5 text-primary" />
                       تقويم المحتوى
                     </h4>
-                    <div className={cn(
-                      "grid gap-3",
-                      selected.results.calendar.length > 7 
-                        ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3" 
-                        : "grid-cols-1 sm:grid-cols-2"
-                    )}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {selected.results.calendar.map((day) => (
-                        <div key={day.day} className={cn("p-3 border rounded-xl space-y-1", theme === 'light' ? 'bg-white border-zinc-200' : 'bg-zinc-950 border-zinc-800')}>
+                        <div key={day.day} className="p-4 bg-surface-container-low border border-outline-variant/10 rounded-xl space-y-2 group hover:bg-white hover:shadow-md transition-all">
                           <div className="flex items-center justify-between">
-                            <span className={cn("text-[10px] font-black", theme === 'light' ? 'text-zinc-300' : 'text-zinc-700')}>يوم {day.day}</span>
-                            <span className={cn("text-[8px] font-bold uppercase", theme === 'light' ? 'bg-zinc-100 text-zinc-500' : 'text-zinc-500')}>{day.platform}</span>
+                            <span className="text-[10px] font-headline font-black text-outline-variant group-hover:text-primary transition-colors">يوم {day.day}</span>
+                            <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 rounded text-[8px] font-label font-bold uppercase text-primary">{day.platform}</span>
                           </div>
-                          <p className={cn("text-xs font-medium", theme === 'light' ? 'text-zinc-700' : 'text-zinc-400')}>{day.topic}</p>
+                          <p className="text-xs font-body font-medium text-on-surface-variant line-clamp-2">{day.topic}</p>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                <div className={cn("space-y-4 border-t pt-6", theme === 'light' ? 'border-zinc-200' : 'border-zinc-800')}>
-                  <h4 className={cn("font-bold", getTextClasses())}>الوسوم</h4>
+                <div className="space-y-4 pt-8 border-t border-outline-variant/10">
+                  <h4 className="font-headline font-bold text-lg text-on-surface">الوسوم</h4>
                   <div className="flex flex-wrap gap-2">
                     {selected.results.hashtags.map((tag, i) => (
-                      <span key={i} className={cn("px-3 py-1 border rounded-full text-xs", theme === 'light' ? 'bg-white border-zinc-200 text-zinc-600' : 'bg-zinc-950 border-zinc-800 text-zinc-500')}>
+                      <span key={i} className="px-4 py-2 bg-surface-container-low border border-outline-variant/10 rounded-full text-xs font-label font-bold text-on-surface-variant hover:bg-white transition-all">
                         {tag}
                       </span>
                     ))}
@@ -319,9 +297,9 @@ export const History: React.FC<HistoryProps> = ({ user, theme }) => {
                 </div>
               </motion.div>
             ) : (
-              <div className={cn("h-full flex flex-col items-center justify-center p-12 border rounded-3xl", theme === 'light' ? 'bg-zinc-50 border-zinc-200 text-zinc-400' : 'bg-zinc-900/20 border-zinc-800/50 text-zinc-700')}>
-                <ChevronRight className="w-12 h-12 opacity-10 rotate-180" />
-                <p className="mt-4">اختر عملية إنشاء لعرض التفاصيل.</p>
+              <div className="h-full min-h-[400px] flex flex-col items-center justify-center p-16 border-2 border-dashed border-outline-variant/20 rounded-3xl space-y-4 text-center">
+                <Globe className="w-16 h-16 text-outline-variant opacity-10" />
+                <p className="text-on-surface-variant font-medium max-w-xs">اختر عملية إنشاء من القائمة الجانبية لعرض تفاصيل الاستراتيجية.</p>
               </div>
             )}
           </AnimatePresence>
@@ -337,41 +315,35 @@ export const History: React.FC<HistoryProps> = ({ user, theme }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setDeletingId(null)}
-              className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-zinc-950/60 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className={cn(
-                "relative w-full max-w-sm p-8 rounded-[2.5rem] border shadow-2xl space-y-6",
-                theme === 'light' ? 'bg-white border-zinc-200' : 'bg-zinc-900 border-zinc-800'
-              )}
+              className="relative w-full max-w-sm bg-surface-container-lowest p-8 rounded-[2.5rem] border border-outline-variant/10 shadow-2xl space-y-8"
             >
-              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
-                <Trash2 className="w-8 h-8 text-red-500" />
+              <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
+                <Trash2 className="w-10 h-10 text-red-500" />
               </div>
               
               <div className="text-center space-y-2">
-                <h3 className={cn("text-xl font-black tracking-tighter", getTextClasses())}>حذف السجل</h3>
-                <p className={cn("text-sm font-medium", getMutedTextClasses())}>
+                <h3 className="text-2xl font-headline font-black text-on-surface tracking-tighter">حذف السجل</h3>
+                <p className="text-on-surface-variant font-medium">
                   هل أنت متأكد أنك تريد حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => setDeletingId(null)}
-                  className={cn(
-                    "py-3 rounded-2xl font-bold transition-all",
-                    theme === 'light' ? 'bg-zinc-100 text-zinc-950 hover:bg-zinc-200' : 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700'
-                  )}
+                  className="py-4 rounded-2xl font-label font-bold text-on-surface-variant bg-surface-container-low hover:bg-surface-container-high transition-all"
                 >
                   إلغاء
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="py-3 rounded-2xl font-bold bg-red-500 text-white hover:bg-red-600 transition-all"
+                  className="py-4 rounded-2xl font-label font-bold bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
                 >
                   حذف
                 </button>

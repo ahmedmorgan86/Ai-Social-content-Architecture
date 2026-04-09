@@ -28,7 +28,8 @@ export async function generateSocialContent(
         * وصف تفصيلي للمشاهد (البصريات، الإضاءة، زوايا الكاميرا)
         * حوار الشخصيات (إن وجد) أو نص التعليق الصوتي
         * انتقالات واضحة وملاحظات حول الإيقاع
-    - "خطاف" (Hook) قوي لأول 3 ثوانٍ يتناسب مع طبيعة التصفح السريع
+    - "خطاف" (Hook) قوي لأول 3 ثوانٍ يتناسب مع طبيعة التصفح السريع.
+    - أفضل أوقات للنشر (Best Posting Times) لكل منصة مختارة بناءً على التوقيت المحلي والجمهور المستهدف.
     - تقويم محتوى لمدة ${duration} يوم (يوم، موضوع، منصة، تنسيق) يوزع المحتوى بذكاء على المنصات المختارة، مع دمج أفكار مبنية على التوجهات الحالية (Trends) في مجال ${niche}.
     `,
     config: {
@@ -46,6 +47,17 @@ export async function generateSocialContent(
             description: "A detailed production script with scene descriptions and dialogue/voiceover." 
           },
           hook: { type: Type.STRING },
+          bestTimes: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                platform: { type: Type.STRING },
+                time: { type: Type.STRING }
+              },
+              required: ["platform", "time"]
+            }
+          },
           calendar: { 
             type: Type.ARRAY, 
             items: { 
@@ -60,7 +72,7 @@ export async function generateSocialContent(
             } 
           }
         },
-        required: ["postIdeas", "videoIdeas", "captions", "hashtags", "score", "calendar"]
+        required: ["postIdeas", "videoIdeas", "captions", "hashtags", "score", "calendar", "hook", "bestTimes"]
       }
     }
   });
@@ -91,6 +103,17 @@ export async function refineContent(
           score: { type: Type.NUMBER },
           script: { type: Type.STRING },
           hook: { type: Type.STRING },
+          bestTimes: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                platform: { type: Type.STRING },
+                time: { type: Type.STRING }
+              },
+              required: ["platform", "time"]
+            }
+          },
           calendar: { 
             type: Type.ARRAY, 
             items: { 
@@ -105,7 +128,7 @@ export async function refineContent(
             } 
           }
         },
-        required: ["postIdeas", "videoIdeas", "captions", "hashtags", "score", "calendar"]
+        required: ["postIdeas", "videoIdeas", "captions", "hashtags", "score", "calendar", "hook", "bestTimes"]
       }
     }
   });

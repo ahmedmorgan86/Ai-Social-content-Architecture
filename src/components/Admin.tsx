@@ -8,10 +8,9 @@ import { cn } from '../lib/utils';
 
 interface AdminProps {
   user: UserProfile;
-  theme: string;
 }
 
-export const Admin: React.FC<AdminProps> = ({ user, theme }) => {
+export const Admin: React.FC<AdminProps> = ({ user }) => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [generations, setGenerations] = useState<ContentGeneration[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,142 +83,121 @@ export const Admin: React.FC<AdminProps> = ({ user, theme }) => {
     u.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getSurfaceClasses = () => {
-    switch (theme) {
-      case 'light': return 'bg-white/50 border-zinc-200';
-      case 'emerald': return 'bg-emerald-900/50 border-emerald-800';
-      case 'rose': return 'bg-rose-900/50 border-rose-800';
-      case 'amber': return 'bg-amber-900/50 border-amber-800';
-      case 'blue': return 'bg-blue-900/50 border-blue-800';
-      default: return 'bg-zinc-900/50 border-zinc-800';
-    }
-  };
-
-  const getTextClasses = () => {
-    return theme === 'light' ? 'text-zinc-950' : 'text-zinc-100';
-  };
-
-  const getMutedTextClasses = () => {
-    switch (theme) {
-      case 'light': return 'text-zinc-500';
-      case 'emerald': return 'text-emerald-400/60';
-      case 'rose': return 'text-rose-400/60';
-      case 'amber': return 'text-amber-400/60';
-      case 'blue': return 'text-blue-400/60';
-      default: return 'text-zinc-500';
-    }
-  };
-
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-12 font-body">
       <header className="space-y-1">
-        <h1 className={cn("text-3xl font-bold flex items-center gap-3", getTextClasses())}>
-          <Shield className={cn("w-8 h-8", getMutedTextClasses())} />
+        <h1 className="text-4xl font-headline font-black text-on-surface tracking-tighter flex items-center gap-4">
+          <Shield className="w-10 h-10 text-primary" />
           لوحة تحكم المسؤول
         </h1>
-        <p className={getMutedTextClasses()}>تحليلات النظام وإدارة المستخدمين.</p>
+        <p className="text-on-surface-variant font-medium">تحليلات النظام وإدارة المستخدمين والعمليات.</p>
       </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="إجمالي المستخدمين" value={stats.totalUsers} icon={<Users className="w-5 h-5" />} theme={theme} />
-        <StatCard title="عمليات الإنشاء" value={stats.totalGens} icon={<Activity className="w-5 h-5" />} theme={theme} />
-        <StatCard title="متوسط الدرجة" value={stats.avgScore} icon={<BarChart3 className="w-5 h-5" />} theme={theme} />
-        <StatCard title="أفضل مجال" value={stats.topNiche} icon={<TrendingUp className="w-5 h-5" />} theme={theme} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard title="إجمالي المستخدمين" value={stats.totalUsers} icon={<Users className="w-6 h-6" />} />
+        <StatCard title="عمليات الإنشاء" value={stats.totalGens} icon={<Activity className="w-6 h-6" />} />
+        <StatCard title="متوسط الدرجة" value={stats.avgScore} icon={<BarChart3 className="w-6 h-6" />} />
+        <StatCard title="أفضل مجال" value={stats.topNiche} icon={<TrendingUp className="w-6 h-6" />} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         {/* User Management */}
-        <div className="lg:col-span-8 space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className={cn("text-xl font-bold", getTextClasses())}>إدارة المستخدمين</h2>
-            <div className="relative">
-              <Search className={cn("absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4", getMutedTextClasses())} />
+        <div className="lg:col-span-8 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <h2 className="text-2xl font-headline font-black text-on-surface tracking-tighter">إدارة المستخدمين</h2>
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-outline-variant" />
               <input
                 type="text"
                 placeholder="البحث عن المستخدمين..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className={cn("pl-10 pr-4 py-2 border rounded-xl outline-none w-64 transition-all", theme === 'light' ? 'bg-zinc-100 border-zinc-200 text-zinc-950 focus:ring-zinc-300' : 'bg-zinc-900 border-zinc-800 text-zinc-100 focus:ring-zinc-700')}
+                className="w-full pl-12 pr-6 py-3 bg-surface-container-low border border-outline-variant/20 rounded-full text-on-surface outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
               />
             </div>
           </div>
 
-          <div className={cn("border rounded-3xl overflow-hidden", getSurfaceClasses())}>
-            <table className="w-full text-left">
-              <thead>
-                <tr className={cn("border-b", theme === 'light' ? 'border-zinc-200 bg-zinc-50' : 'border-zinc-800 bg-zinc-900/50')}>
-                  <th className={cn("px-6 py-4 text-xs font-bold uppercase tracking-wider", getMutedTextClasses())}>المستخدم</th>
-                  <th className={cn("px-6 py-4 text-xs font-bold uppercase tracking-wider", getMutedTextClasses())}>الدور</th>
-                  <th className={cn("px-6 py-4 text-xs font-bold uppercase tracking-wider", getMutedTextClasses())}>تاريخ الانضمام</th>
-                  <th className={cn("px-6 py-4 text-xs font-bold uppercase tracking-wider text-right", getMutedTextClasses())}>الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody className={cn("divide-y", theme === 'light' ? 'divide-zinc-200' : 'divide-zinc-800')}>
-                {filteredUsers.map((u) => (
-                  <tr key={u.uid} className={cn("transition-colors", theme === 'light' ? 'hover:bg-zinc-50' : 'hover:bg-zinc-800/30')}>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <img src={u.photoURL || ''} alt="" className={cn("w-8 h-8 rounded-full border", theme === 'light' ? 'border-zinc-200' : 'border-zinc-700')} />
-                        <div>
-                          <div className={cn("text-sm font-medium", getTextClasses())}>{u.displayName}</div>
-                          <div className={getMutedTextClasses()}>{u.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={cn("px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider", u.role === 'admin' ? (theme === 'light' ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-950') : (theme === 'light' ? 'bg-zinc-100 text-zinc-500' : 'bg-zinc-800 text-zinc-400'))}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className={cn("px-6 py-4 text-sm", getMutedTextClasses())}>
-                      {u.createdAt?.toDate().toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {u.uid !== user.uid && (
-                          <>
-                            <button
-                              onClick={() => setConfirmingRoleChange({ user: u, newRole: u.role === 'admin' ? 'user' : 'admin' })}
-                              className={cn(
-                                "p-2 rounded-lg transition-all",
-                                u.role === 'admin' 
-                                  ? (theme === 'light' ? 'hover:bg-zinc-100 text-zinc-400 hover:text-amber-600' : 'hover:bg-zinc-800 text-zinc-600 hover:text-amber-400')
-                                  : (theme === 'light' ? 'hover:bg-zinc-100 text-zinc-400 hover:text-emerald-600' : 'hover:bg-zinc-800 text-zinc-600 hover:text-emerald-400')
-                              )}
-                              title={u.role === 'admin' ? 'تخفيض إلى مستخدم' : 'ترقية إلى مسؤول'}
-                            >
-                              {u.role === 'admin' ? <UserMinus className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                            </button>
-                        <button
-                          onClick={() => setDeletingUser(u.uid)}
-                          className={cn("p-2 rounded-lg transition-all", theme === 'light' ? 'hover:bg-zinc-100 text-zinc-400 hover:text-red-500' : 'hover:bg-zinc-800 text-zinc-600 hover:text-red-400')}
-                          title="حذف المستخدم"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
+          <div className="bg-surface-container-lowest border border-outline-variant/10 rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-right">
+                <thead>
+                  <tr className="border-b border-outline-variant/10 bg-surface-container-low/50">
+                    <th className="px-8 py-5 text-[10px] font-label font-bold uppercase tracking-widest text-on-surface-variant">المستخدم</th>
+                    <th className="px-8 py-5 text-[10px] font-label font-bold uppercase tracking-widest text-on-surface-variant">الدور</th>
+                    <th className="px-8 py-5 text-[10px] font-label font-bold uppercase tracking-widest text-on-surface-variant">تاريخ الانضمام</th>
+                    <th className="px-8 py-5 text-[10px] font-label font-bold uppercase tracking-widest text-on-surface-variant text-left">الإجراءات</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/10">
+                  {filteredUsers.map((u) => (
+                    <tr key={u.uid} className="transition-colors hover:bg-surface-container-low/30">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <img src={u.photoURL || ''} alt="" className="w-10 h-10 rounded-full border-2 border-white shadow-sm" />
+                          <div>
+                            <div className="text-sm font-headline font-bold text-on-surface">{u.displayName}</div>
+                            <div className="text-xs text-on-surface-variant font-medium">{u.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className={cn(
+                          "px-3 py-1 rounded-full text-[10px] font-label font-bold uppercase tracking-widest border",
+                          u.role === 'admin' ? "bg-primary/10 text-primary border-primary/20" : "bg-surface-container-low text-on-surface-variant border-outline-variant/10"
+                        )}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5 text-sm text-on-surface-variant font-medium">
+                        {u.createdAt?.toDate().toLocaleDateString()}
+                      </td>
+                      <td className="px-8 py-5 text-left">
+                        <div className="flex items-center justify-start gap-2">
+                          {u.uid !== user.uid && (
+                            <>
+                              <button
+                                onClick={() => setConfirmingRoleChange({ user: u, newRole: u.role === 'admin' ? 'user' : 'admin' })}
+                                className={cn(
+                                  "p-2 rounded-full transition-all",
+                                  u.role === 'admin' 
+                                    ? "hover:bg-amber-50 text-outline-variant hover:text-amber-600"
+                                    : "hover:bg-emerald-50 text-outline-variant hover:text-emerald-600"
+                                )}
+                                title={u.role === 'admin' ? 'تخفيض إلى مستخدم' : 'ترقية إلى مسؤول'}
+                              >
+                                {u.role === 'admin' ? <UserMinus className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                              </button>
+                              <button
+                                onClick={() => setDeletingUser(u.uid)}
+                                className="p-2 rounded-full hover:bg-red-50 text-outline-variant hover:text-red-500 transition-all"
+                                title="حذف المستخدم"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
         {/* Recent Activity */}
-        <div className="lg:col-span-4 space-y-6">
-          <h2 className={cn("text-xl font-bold", getTextClasses())}>النشاط الأخير</h2>
+        <div className="lg:col-span-4 space-y-8">
+          <h2 className="text-2xl font-headline font-black text-on-surface tracking-tighter">النشاط الأخير</h2>
           <div className="space-y-4">
-            {generations.slice(0, 5).map((g) => (
-              <div key={g.id} className={cn("p-4 border rounded-2xl space-y-2", getSurfaceClasses())}>
+            {generations.slice(0, 6).map((g) => (
+              <div key={g.id} className="p-5 bg-surface-container-lowest border border-outline-variant/10 rounded-2xl space-y-3 shadow-sm hover:shadow-md transition-all group">
                 <div className="flex items-center justify-between">
-                  <span className={cn("text-xs font-bold uppercase tracking-widest", getMutedTextClasses())}>{g.niche}</span>
-                  <span className={cn("text-xs", getMutedTextClasses())}>{g.createdAt?.toDate().toLocaleTimeString()}</span>
+                  <span className="text-[10px] font-label font-bold uppercase tracking-widest text-primary group-hover:text-primary transition-colors">{g.niche}</span>
+                  <span className="text-[10px] font-medium text-outline-variant">{g.createdAt?.toDate().toLocaleTimeString()}</span>
                 </div>
-                <p className={cn("text-sm line-clamp-1", theme === 'light' ? 'text-zinc-600' : 'text-zinc-300')}>{g.results.postIdeas[0]}</p>
+                <p className="text-sm text-on-surface-variant font-medium line-clamp-2 leading-relaxed">{g.results.postIdeas[0]}</p>
               </div>
             ))}
           </div>
@@ -229,7 +207,7 @@ export const Admin: React.FC<AdminProps> = ({ user, theme }) => {
       {/* Confirmation Modal */}
       <AnimatePresence>
         {confirmingRoleChange && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -241,47 +219,44 @@ export const Admin: React.FC<AdminProps> = ({ user, theme }) => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className={cn(
-                "relative w-full max-w-md p-8 rounded-[2.5rem] border shadow-2xl space-y-6",
-                theme === 'light' ? 'bg-white border-zinc-200' : 'bg-zinc-950 border-zinc-800'
-              )}
+              className="relative w-full max-w-md bg-surface-container-lowest p-10 rounded-[2.5rem] border border-outline-variant/10 shadow-2xl space-y-8"
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={cn("p-2 rounded-xl", confirmingRoleChange.newRole === 'admin' ? 'bg-emerald-500/10' : 'bg-amber-500/10')}>
-                    <AlertTriangle className={cn("w-5 h-5", confirmingRoleChange.newRole === 'admin' ? 'text-emerald-500' : 'text-amber-500')} />
+                <div className="flex items-center gap-4">
+                  <div className={cn("p-3 rounded-2xl", confirmingRoleChange.newRole === 'admin' ? 'bg-emerald-500/10' : 'bg-amber-500/10')}>
+                    <AlertTriangle className={cn("w-6 h-6", confirmingRoleChange.newRole === 'admin' ? 'text-emerald-500' : 'text-amber-500')} />
                   </div>
-                  <h3 className={cn("text-xl font-bold", getTextClasses())}>تغيير دور المستخدم</h3>
+                  <h3 className="text-2xl font-headline font-black text-on-surface tracking-tighter">تغيير دور المستخدم</h3>
                 </div>
                 <button 
                   onClick={() => setConfirmingRoleChange(null)}
-                  className={cn("p-2 rounded-full transition-colors", theme === 'light' ? 'hover:bg-zinc-100' : 'hover:bg-zinc-800')}
+                  className="p-2 rounded-full hover:bg-surface-container-low transition-all text-on-surface-variant"
                 >
                   <CloseIcon className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <div className={cn("p-4 rounded-2xl border flex items-center gap-4", theme === 'light' ? 'bg-zinc-50 border-zinc-100' : 'bg-zinc-900 border-zinc-800')}>
-                  <img src={confirmingRoleChange.user.photoURL || ''} alt="" className="w-12 h-12 rounded-full border border-zinc-800" />
+              <div className="space-y-6">
+                <div className="p-6 bg-surface-container-low border border-outline-variant/10 rounded-2xl flex items-center gap-5">
+                  <img src={confirmingRoleChange.user.photoURL || ''} alt="" className="w-14 h-14 rounded-full border-2 border-white shadow-sm" />
                   <div>
-                    <div className={cn("font-bold", getTextClasses())}>{confirmingRoleChange.user.displayName}</div>
-                    <div className={cn("text-xs", getMutedTextClasses())}>{confirmingRoleChange.user.email}</div>
+                    <div className="font-headline font-bold text-on-surface">{confirmingRoleChange.user.displayName}</div>
+                    <div className="text-xs text-on-surface-variant font-medium">{confirmingRoleChange.user.email}</div>
                   </div>
                 </div>
 
-                <p className={cn("text-sm leading-relaxed", theme === 'light' ? 'text-zinc-600' : 'text-zinc-400')}>
+                <p className="text-sm text-on-surface-variant font-medium leading-relaxed">
                   هل أنت متأكد أنك تريد {confirmingRoleChange.newRole === 'admin' ? 'ترقية' : 'تخفيض'} هذا المستخدم إلى 
-                  <span className={cn("font-bold mx-1", confirmingRoleChange.newRole === 'admin' ? 'text-emerald-500' : 'text-amber-500')}>
+                  <span className={cn("font-black mx-1", confirmingRoleChange.newRole === 'admin' ? 'text-emerald-500' : 'text-amber-500')}>
                     {confirmingRoleChange.newRole === 'admin' ? 'مسؤول' : 'مستخدم عادي'}
                   </span>؟
                 </p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => setConfirmingRoleChange(null)}
-                  className={cn("flex-1 py-4 rounded-2xl font-bold transition-all", theme === 'light' ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200' : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800')}
+                  className="py-4 rounded-2xl font-label font-bold text-on-surface-variant bg-surface-container-low hover:bg-surface-container-high transition-all"
                 >
                   إلغاء
                 </button>
@@ -289,10 +264,10 @@ export const Admin: React.FC<AdminProps> = ({ user, theme }) => {
                   onClick={handleRoleChange}
                   disabled={isUpdating}
                   className={cn(
-                    "flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all",
+                    "py-4 rounded-2xl font-label font-bold flex items-center justify-center gap-3 transition-all shadow-lg active:scale-95",
                     confirmingRoleChange.newRole === 'admin' 
-                      ? "bg-emerald-600 text-white hover:bg-emerald-700" 
-                      : "bg-amber-600 text-white hover:bg-amber-700"
+                      ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-500/20" 
+                      : "bg-amber-600 text-white hover:bg-amber-700 shadow-amber-500/20"
                   )}
                 >
                   {isUpdating ? <Activity className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
@@ -313,41 +288,35 @@ export const Admin: React.FC<AdminProps> = ({ user, theme }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setDeletingUser(null)}
-              className="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-zinc-950/60 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className={cn(
-                "relative w-full max-w-sm p-8 rounded-[2.5rem] border shadow-2xl space-y-6",
-                theme === 'light' ? 'bg-white border-zinc-200' : 'bg-zinc-900 border-zinc-800'
-              )}
+              className="relative w-full max-w-sm bg-surface-container-lowest p-10 rounded-[2.5rem] border border-outline-variant/10 shadow-2xl space-y-8"
             >
-              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
-                <Trash2 className="w-8 h-8 text-red-500" />
+              <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
+                <Trash2 className="w-10 h-10 text-red-500" />
               </div>
               
               <div className="text-center space-y-2">
-                <h3 className={cn("text-xl font-black tracking-tighter", getTextClasses())}>حذف المستخدم</h3>
-                <p className={cn("text-sm font-medium", getMutedTextClasses())}>
+                <h3 className="text-2xl font-headline font-black text-on-surface tracking-tighter">حذف المستخدم</h3>
+                <p className="text-on-surface-variant font-medium">
                   هل أنت متأكد أنك تريد حذف هذا المستخدم؟ لن يؤدي هذا إلى حذف عمليات الإنشاء الخاصة به، ولكن سيفقد المستخدم إمكانية الوصول.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => setDeletingUser(null)}
-                  className={cn(
-                    "py-3 rounded-2xl font-bold transition-all",
-                    theme === 'light' ? 'bg-zinc-100 text-zinc-950 hover:bg-zinc-200' : 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700'
-                  )}
+                  className="py-4 rounded-2xl font-label font-bold text-on-surface-variant bg-surface-container-low hover:bg-surface-container-high transition-all"
                 >
                   إلغاء
                 </button>
                 <button
                   onClick={handleDeleteUser}
-                  className="py-3 rounded-2xl font-bold bg-red-500 text-white hover:bg-red-600 transition-all"
+                  className="py-4 rounded-2xl font-label font-bold bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all active:scale-95"
                 >
                   حذف
                 </button>
@@ -360,12 +329,14 @@ export const Admin: React.FC<AdminProps> = ({ user, theme }) => {
   );
 };
 
-const StatCard = ({ title, value, icon, theme }: any) => (
-  <div className={cn("p-6 border rounded-3xl space-y-4", theme === 'light' ? 'bg-white/50 border-zinc-200' : 'bg-zinc-900/50 border-zinc-800')}>
-    <div className={cn("flex items-center justify-between", theme === 'light' ? 'text-zinc-500' : 'text-zinc-500')}>
-      <span className="text-xs font-bold uppercase tracking-wider">{title}</span>
-      {icon}
+const StatCard = ({ title, value, icon }: any) => (
+  <div className="p-8 bg-surface-container-lowest border border-outline-variant/10 rounded-[2rem] space-y-6 shadow-sm hover:shadow-md transition-all group">
+    <div className="flex items-center justify-between text-on-surface-variant">
+      <span className="text-[10px] font-label font-bold uppercase tracking-widest group-hover:text-primary transition-colors">{title}</span>
+      <div className="p-2 bg-primary/5 rounded-lg text-primary group-hover:bg-primary group-hover:text-white transition-all">
+        {icon}
+      </div>
     </div>
-    <div className={cn("text-3xl font-black", theme === 'light' ? 'text-zinc-950' : 'text-zinc-100')}>{value}</div>
+    <div className="text-4xl font-headline font-black text-on-surface tracking-tighter">{value}</div>
   </div>
 );
